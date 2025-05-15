@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=arc-dark
+Comment=Stuff
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+Name=arc-dark
+GtkTheme=arc-dark
+IconTheme=arc-dark
+MetacityTheme=arc-dark
