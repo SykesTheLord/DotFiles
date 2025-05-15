@@ -1,2 +1,2 @@
 # DotFiles
-My dotfiles for various repos
+My dotfiles for various distros
