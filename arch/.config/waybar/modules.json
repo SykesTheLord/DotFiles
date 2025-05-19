@@ -2,7 +2,7 @@
   "custom/arch": {
     "format": "󰣇",
     "tooltip": false,
-    "on-click": "wlogout -b 4"
+    "on-click": "wlogout -b 2"
   },
 
   "hyprland/window": {
