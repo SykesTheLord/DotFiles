@@ -15,6 +15,12 @@
         "2": "blue"
      }
   },
+  "display": {
+      "color": {
+          "keys": "cyan",
+          "title": "cyan"
+      }
+  },
   "modules": [
     "title",
     "separator",
