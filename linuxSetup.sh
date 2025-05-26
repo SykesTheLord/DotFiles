@@ -17,6 +17,8 @@ case "$de_choice" in
     * ) INSTALL_DESKTOPENV=false ;;
 esac
 
+git clone https://github.com/SykesTheLord/DotFiles.git ~/.DotFiles
+cd .DotFiles
 
 if [[ "$INSTALL_DESKTOPENV" == true && -f "/etc/arch-release" ]]; then
 
@@ -223,7 +225,7 @@ elif [[ "$DISTRO" == "Debian" ]]; then
         fi
     fi
 
-elif [ -f "/etc/arch-release" ]; then
+elif [ -f "/etyyc/arch-release" ]; then
     # Arch Linux setup
     print_message "Setting up for Arch"
     sudo pacman -Syu --noconfirm
@@ -260,12 +262,10 @@ elif [ -f "/etc/arch-release" ]; then
     fi
 
     if [ "$INSTALL_DESKTOPENV" = true ]; then
-        if ! command -v hyprland &> /dev/null; then
-            print_message "Installing Hyprland"
-            # Install required programs
-            wget https://raw.githubusercontent.com/SykesTheLord/AutoLinuxSetup/refs/heads/main/archDesktopInstall.sh
-            bash archDesktopInstall.sh
-        fi
+        print_message "Installing ArchDesktop Apps"
+        # Install required programs
+        cd .DotFiles
+        bash archDesktopInstall.sh
     fi
 
 
@@ -480,6 +480,7 @@ else
     echo "Download Terrafrom manually from Hashicorp.com" >> toDo.txt
 fi
 
+cd ~/
 mkdir UserApps
 
 if [[ $(grep -i Microsoft /proc/version) ]]; then
@@ -518,9 +519,8 @@ curl -Lo bicep https://github.com/Azure/bicep/releases/latest/download/bicep-lin
 chmod +x ./bicep
 sudo mv ./bicep /usr/local/bin/bicep
 
-# Install and setup Neovim using the local NvimSetup.sh
-wget https://raw.githubusercontent.com/SykesTheLord/NeoVimConfig/refs/heads/main/NvimSetup.sh
 
+cd .DotFiles
 bash NvimSetup.sh
 
 # Install Terraform autocomplete
@@ -552,8 +552,7 @@ mkdir ~/Development/Personal
 mkdir ~/Development/School
 mkdir ~/Development/Work
 
-git clone https://github.com/SykesTheLord/DotFiles.git
-cd DotFiles
+cd .DotFiles
 python3 installDotfiles.py
 cd
 

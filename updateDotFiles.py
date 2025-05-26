@@ -3,7 +3,6 @@ import os
 import library as lib
 
 
-
 directory_path = ""
 
 if lib.is_arch_linux():
@@ -39,12 +38,12 @@ if directory_path != "":
         files.append(file.replace(directory_path, ""))
     for directory in directories:
         if directory.startswith(".config"):
-            command = "cp -a ~/" + directory + " " + directory_path + ".config/"
+            command = "cp -a -v ~/" + directory + " " + directory_path + ".config/"
         else:
-            command = "cp -a ~/" + directory + " " + directory_path
+            command = "cp -a -v ~/" + directory + " " + directory_path
         print(command)
-        os.system("/bin/bash -c \"" + command + "\"")
+        os.system('/bin/bash -c "' + command + '"')
     for file in files:
-        command = "cp -a ~/" + file + " " + directory_path + file
+        command = "cp -a -v ~/" + file + " " + directory_path + file
         print(command)
-        os.system("/bin/bash -c \"" + command + "\"")
+        os.system('/bin/bash -c "' + command + '"')

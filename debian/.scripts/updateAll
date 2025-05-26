@@ -12,7 +12,6 @@ if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Debian" || "$DISTRO" == "Neon" ]]; 
     # Ubuntu setup
     print_message "Updating for Debian based"
     sudo apt update && sudo apt upgrade -y
-    sudo am -u
 
 elif [ -f "/etc/arch-release" ]; then
     # Arch Linux setup
@@ -37,11 +36,11 @@ else
     exit 1
 fi
 
-if [[ $(grep -i Microsoft /proc/version) || "$DISTRO" == "Ubuntu" || "$DISTRO" == "Debian" || "$DISTRO" == "Neon" ]]; then
-    bash ~/.config/updateNeovimConf.sh
+if [[ $(grep -i Microsoft /proc/version) && "$DISTRO" != "Ubuntu" && "$DISTRO" != "Debian" && "$DISTRO" != "Neon" ]]; then
+    updateNeovimConf
     print_message "Completed updates"
 else
-    bash ~/.config/updateNeovimConf.sh
+    updateNeovimConf
     am -u
     sudo flatpak update
     print_message "Completed updates"

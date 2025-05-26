@@ -36,12 +36,10 @@ if directory_path != "":
         files.append(file.replace(directory_path, ""))
     for directory in directories:
         if directory.startswith(".config"):
-            command = "cp -a " + directory_path + directory + " " + "~/" + ".config/"
+            command = "cp -a -v " + directory_path + directory + " " + "~/" + ".config/"
         else:
-            command = "cp -a " + directory_path + directory + " " + "~/"
-        print(command)
-        # os.system("/bin/bash -c \"" + command + "\"")
+            command = "cp -a -v " + directory_path + directory + " " + "~/"
+        os.system('/bin/bash -c "' + command + '"')
     for file in files:
-        command = "cp " + directory_path + file + " " + "~/" + file
-        print(command)
-        # os.system("/bin/bash -c \"" + command + "\"")
+        command = "cp -v " + directory_path + file + " " + "~/" + file
+        os.system('/bin/bash -c "' + command + '"')

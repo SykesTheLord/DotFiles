@@ -100,20 +100,19 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias vim="nvim"
-alias upNvim="bash ~/.config/updateNeovimConf.sh"
-alias updateAll="bash ~/.config/updateAll.sh"
+alias upNvim="updateNeovimConf"
+alias updateAll="updateAll"
 
 export PATH=$PATH:~/UserApps/win32yank
 export PATH=$PATH:~/UserApps/terraform
 export PATH=$PATH:~/UserApps/zen
 export PATH=$PATH:~/.dotnet/tools
 export PATH=$PATH:~/UserApps/nuget
-export PATH=$PATH:~/UserApps/tmux-sessionizer
-export PATH=$PATH:~/.dotnet/tools
 export PATH=$PATH:/snap/kubectl/3546
 export PATH=$PATH:/opt/nvim-linux-x86_64/bin
 export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:~/UserApps/eww
+export PATH=$PATH:~/.scripts/
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
