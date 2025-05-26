@@ -23,6 +23,9 @@ else
     exit 1
 fi
 
+cd ~/.DotFiles
+git pull
+
 rm -rf ~/.config/nvim 
 cp -a -v ~/.DotFiles/$srcFolder/.config/nvim ~/.config
 nvim +PlugInstall
