@@ -225,7 +225,7 @@ elif [[ "$DISTRO" == "Debian" ]]; then
         fi
     fi
 
-elif [ -f "/etyyc/arch-release" ]; then
+elif [ -f "/etc/arch-release" ]; then
     # Arch Linux setup
     print_message "Setting up for Arch"
     sudo pacman -Syu --noconfirm
