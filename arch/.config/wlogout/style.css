@@ -53,34 +53,40 @@ Buttons
   margin: 10px;
   border-radius: 20px;
   background-image: image(url("icons/lock.png"));
+  background-color: rgba(12, 12, 12, 0.3);
 }
 
 #logout {
   margin: 10px;
   border-radius: 20px;
   background-image: image(url("icons/logout.png"));
+  background-color: rgba(12, 12, 12, 0.3);
 }
 
 #shutdown {
   margin: 10px;
   border-radius: 20px;
   background-image: image(url("icons/shutdown.png"));
+  background-color: rgba(12, 12, 12, 0.3);
 }
 
 #reboot {
   margin: 10px;
   border-radius: 20px;
   background-image: image(url("icons/reboot.png"));
+  background-color: rgba(12, 12, 12, 0.3);
 }
 
 #suspend {
   margin: 10px;
   border-radius: 20px;
   background-image: image(url("icons/suspend.png"));
+  background-color: rgba(12, 12, 12, 0.3);
 }
 
 #hibernate {
   margin: 10px;
   border-radius: 20px;
   background-image: image(url("icons/hibernate.png"));
+  background-color: rgba(12, 12, 12, 0.3);
 }
