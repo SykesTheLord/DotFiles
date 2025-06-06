@@ -114,6 +114,7 @@ export PATH=$PATH:/snap/kubectl/3546
 export PATH=$PATH:/opt/nvim-linux-x86_64/bin
 export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:~/UserApps/eww
+export PATH=$PATH:~/.scripts/
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
