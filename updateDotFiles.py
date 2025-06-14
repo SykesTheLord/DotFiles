@@ -1,5 +1,4 @@
 import os
-
 import library as lib
 
 
@@ -41,9 +40,9 @@ if directory_path != "":
             command = "cp -a -v ~/" + directory + " " + directory_path + ".config/"
         else:
             command = "cp -a -v ~/" + directory + " " + directory_path
-        print(command)
+        # print(command)
         os.system('/bin/bash -c "' + command + '"')
     for file in files:
         command = "cp -a -v ~/" + file + " " + directory_path + file
-        print(command)
+        # print(command)
         os.system('/bin/bash -c "' + command + '"')

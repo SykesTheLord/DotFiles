@@ -177,4 +177,3 @@ nvim +PlugInstall +qall &
 sleep 50
 
 print_message "Setup complete! You can now start Neovim with 'nvim'."
-rm NvimSetup.sh
