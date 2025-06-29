@@ -506,6 +506,7 @@ else
     if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Debian" || "$DISTRO" == "Neon" ]]; then
         am -i ghostty
     fi
+    am -i obsidian
     # Open Jetbrains for toolbox link
     firefox https://www.jetbrains.com/toolbox-app/download/download-thanks.html?platform=linux
 fi
