@@ -21,7 +21,7 @@
         "setclient": false,
         "setcustom": false,
         "setminimized": true,
-        "setprofile": false,
+        "setprofile": true,
         "setserver": false,
         "setserverhost": false,
         "setserverport": false

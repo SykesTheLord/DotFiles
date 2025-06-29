@@ -17,7 +17,7 @@
     "modules-right": [
         "idle_inhibitor",
         "pulseaudio",
-        "network",
+        // "network",
         "bluetooth",
         "cpu",
         "memory",
