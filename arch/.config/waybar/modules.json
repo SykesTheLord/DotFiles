@@ -48,7 +48,7 @@
     "on-click": "pavucontrol"
   },
   "backlight": {
-    "format": "{percent}% {icon}",
+    "format": "{percent}% ",
     "format-icons": ["", ""]
   },
   "network": {
@@ -78,10 +78,10 @@
     "tooltip": true
   },
   "temperature": {
-    // "interval": 10,
-    // "hwmon-path": "/sys/devices/platform/coretemp.0/hwmon/hwmon4/temp1_input",
-    // "critical-threshold": 90,
-    //  "format-critical": " {temperatureC}",
+    "interval": 10,
+    "hwmon-path": "/sys/devices/platform/coretemp.0/hwmon/hwmon5/temp1_input",
+    "critical-threshold": 90,
+    "format-critical": " {temperatureC}",
     "format": " {temperatureC}°C"
   },
   "hyprland/language": {
@@ -109,5 +109,16 @@
     "format": "{:%H:%M | %e %B} ",
     "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
     "format-alt": "{:%Y-%m-%d}"
+  },
+  "power-profiles-daemon": {
+    "format": "{icon}",
+    "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
+    "tooltip": true,
+    "format-icons": {
+      "default": "",
+      "performance": "",
+      "balanced": "",
+      "power-saver": ""
+    }
   }
 }
