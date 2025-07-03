@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+
 def is_ubuntu_or_neon():
     try:
         distro = (
@@ -55,8 +56,19 @@ def list_files_recursive(path=".", files=[], directories=[]):
     elif is_ubuntu_or_neon():
         to_remove = "./ubuntu/"
     directories_to_ignore = [".config", ".oh-my-zsh/themes", ".oh-my-zsh"]
-    directory_files_to_ignore = [".themes",".icons",".oh-my-zsh/.github",".oh-my-zsh/.devcontainer",".oh-my-zsh/lib/",".oh-my-zsh/plugins",".oh-my-zsh/templates",".oh-my-zsh/tools", ".scripts"]
-    files_to_ignore = [".oh-my-zsh/.editorconfig",
+    directory_files_to_ignore = [
+        ".themes",
+        ".icons",
+        ".oh-my-zsh/.github",
+        ".oh-my-zsh/.devcontainer",
+        ".oh-my-zsh/lib/",
+        ".oh-my-zsh/plugins",
+        ".oh-my-zsh/templates",
+        ".oh-my-zsh/tools",
+        ".scripts",
+    ]
+    files_to_ignore = [
+        ".oh-my-zsh/.editorconfig",
         ".oh-my-zsh/.gitignore",
         ".oh-my-zsh/.gitpod.Dockerfile",
         ".oh-my-zsh/.gitpod.yml",
@@ -209,13 +221,14 @@ def list_files_recursive(path=".", files=[], directories=[]):
         ".oh-my-zsh/themes/xiong-chiamiov-plus.zsh-theme",
         ".oh-my-zsh/themes/xiong-chiamiov.zsh-theme",
         ".oh-my-zsh/themes/ys.zsh-theme",
-        ".oh-my-zsh/themes/zhann.zsh-theme"]
+        ".oh-my-zsh/themes/zhann.zsh-theme",
+    ]
     for entry in os.listdir(path):
         full_path = os.path.join(path, entry)
         if os.path.isdir(full_path):
             to_be_ignored = False
             for directory in directories_to_ignore:
-                if full_path.replace(to_remove,"") == directory:
+                if full_path.replace(to_remove, "") == directory:
                     to_be_ignored = True
             for directory in directories:
                 if full_path.startswith(directory):
@@ -226,13 +239,13 @@ def list_files_recursive(path=".", files=[], directories=[]):
         else:
             to_be_ignored = False
             for directory in directory_files_to_ignore:
-                if full_path.replace(to_remove,"").startswith(directory):
+                if full_path.replace(to_remove, "").startswith(directory):
                     to_be_ignored = True
             for directory in directories:
                 if full_path.startswith(directory):
                     to_be_ignored = True
             for file in files_to_ignore:
-                if full_path.replace(to_remove,"").startswith(file):
+                if full_path.replace(to_remove, "").startswith(file):
                     to_be_ignored = True
             if to_be_ignored == False:
                 files.append(full_path)

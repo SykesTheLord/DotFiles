@@ -20,12 +20,13 @@ esac
 git clone https://github.com/SykesTheLord/DotFiles.git ~/.DotFiles
 cd .DotFiles
 
-if [[ "$INSTALL_DESKTOPENV" == true && -f "/etc/arch-release" ]]; then
+INSTALL_SWAY=false
+
+if [[ "$INSTALL_DESKTOPENV" == true ]]; then
 
     #
     # --- PROMPT FOR SWAYWM INSTALLATION (once) ---
     #
-    INSTALL_SWAY=false
 
     # If sway already on PATH, we’ll install QtGreet unconditionally later
     if command -v sway &> /dev/null; then
@@ -552,6 +553,10 @@ mkdir ~/Development
 mkdir ~/Development/Personal
 mkdir ~/Development/School
 mkdir ~/Development/Work
+
+if [ "$INSTALL_DESKTOPENV" = true ]; then
+    sudo timedatectl set-local-rtc 1
+fi
 
 cd .DotFiles
 python3 installDotfiles.py

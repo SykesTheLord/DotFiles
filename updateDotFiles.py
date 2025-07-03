@@ -35,14 +35,18 @@ if directory_path != "":
         directories.append(directory.replace(directory_path, ""))
     for file in files_tmp:
         files.append(file.replace(directory_path, ""))
+    print("doing directories")
     for directory in directories:
         if directory.startswith(".config"):
             command = "cp -a -v ~/" + directory + " " + directory_path + ".config/"
         else:
             command = "cp -a -v ~/" + directory + " " + directory_path
-        # print(command)
-        os.system('/bin/bash -c "' + command + '"')
+        print(command)
+        if ".config/hypr/components/monitors.conf" not in command:
+            os.system('/bin/bash -c "' + command + '"')
+    print("doing files")
     for file in files:
         command = "cp -a -v ~/" + file + " " + directory_path + file
-        # print(command)
-        os.system('/bin/bash -c "' + command + '"')
+        print(command)
+        if ".config/hypr/components/monitors.conf" not in command:
+            os.system('/bin/bash -c "' + command + '"')
