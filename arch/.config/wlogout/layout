@@ -17,8 +17,8 @@
     "keybind" : "r"
 }
 {
-    "label" : "suspend",
-    "action" : "systemctl suspend",
-    "text" : "Suspend",
+    "label" : "hibernate",
+    "action" : "systemctl hibernate",
+    "text" : "Hibernate",
     "keybind" : "p"
 }

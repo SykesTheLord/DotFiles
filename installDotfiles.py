@@ -43,3 +43,7 @@ if directory_path != "":
     for file in files:
         command = "cp -v " + directory_path + file + " " + "~/" + file
         os.system('/bin/bash -c "' + command + '"')
+
+
+if lib.is_arch_linux():
+    os.system('/bin/bash -c "sudo cp -r ~/.udev/rules/* /etc/udev/rules.d/."')

@@ -127,6 +127,7 @@ if [ -d "$FNM_PATH" ]; then
     eval "`fnm env`"
 fi
 
+
 # Enable direnv
 eval "$(direnv hook zsh)"
 

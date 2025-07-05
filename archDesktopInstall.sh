@@ -24,6 +24,7 @@ sudo pacman -S --noconfirm font-config
 sudo pacman -S --noconfirm rustc
 sudo pacman -S --noconfirm cargo
 sudo pacman -S --noconfirm ghostty
+sudo pacman -S --noconfirm tuned
 
 yay -S --noconfirm hyprland-git
 yay -S --noconfirm hyprlock-git

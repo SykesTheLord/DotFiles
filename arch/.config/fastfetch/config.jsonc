@@ -12,7 +12,7 @@
       },
       "color": {             // Override logo colors
         "1": "cyan",
-        "2": "blue"
+        "2": "white"
      }
   },
   "display": {

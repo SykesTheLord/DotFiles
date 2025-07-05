@@ -1,0 +1,6 @@
+[Unit]
+Description=Triggered when AC is unplugged
+
+[Service]
+Type=oneshot
+ExecStart=%h/.scripts/setPowerProfileBattery.sh

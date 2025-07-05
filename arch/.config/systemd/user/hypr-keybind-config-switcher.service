@@ -1,0 +1,6 @@
+[Unit]
+Description=Switch keybinds for hypr 
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/hypr/UserScripts/select-keybind-rules/switch-keybinds.sh
