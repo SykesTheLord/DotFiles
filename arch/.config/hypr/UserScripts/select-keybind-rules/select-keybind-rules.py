@@ -1,17 +1,16 @@
 import os
 import subprocess
+from time import sleep
 
-monitors = (
-            subprocess.check_output(["hyprctl", "monitors"])
-            .decode()
-            .strip()
-        )
+monitors = subprocess.check_output(["xdpyinfo"]).decode().strip()
 
-amountOfMonitors = monitors.lower().count("monitor")
-
-if amountOfMonitors > 1:
-    os.system('/bin/bash -c "cp $HOME/.config/hypr/UserScripts/select-keybind-rules/external-displays-keybinds.conf $HOME/.config/hypr/components/UserKeybinds.conf"')
-    os.system('hyprctl reload')
+if "number of screens:    1" not in monitors:
+    os.system(
+        '/bin/bash -c "cp $HOME/.config/hypr/UserScripts/select-keybind-rules/external-displays-keybinds.conf $HOME/.config/hypr/components/UserKeybinds.conf"'
+    )
+    os.system("hyprctl reload")
 else:
-    os.system('/bin/bash -c "cp $HOME/.config/hypr/UserScripts/select-keybind-rules/laptop-only-keybinds.conf $HOME/.config/hypr/components/UserKeybinds.conf"')
-    os.system('hyprctl reload')
+    os.system(
+        '/bin/bash -c "cp $HOME/.config/hypr/UserScripts/select-keybind-rules/laptop-only-keybinds.conf $HOME/.config/hypr/components/UserKeybinds.conf"'
+    )
+    os.system("hyprctl reload")
