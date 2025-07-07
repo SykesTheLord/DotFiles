@@ -48,4 +48,5 @@ yay -S --noconfirm hyprcursor
 yay -S --noconfirm wlogout
 yay -S --noconfirm vmware-keymaps
 yay -S --noconfirm vmware-workstation
-sudo cp -r ~/.DotFiles/arch/.udev/rules/* /etc/udev/rules.d/.
+sudo cp -rv ~/.DotFiles/arch/.udev/rules/* /etc/udev/rules.d/.
+sudo ln -s ~/.scripts/opt /opt/scripts

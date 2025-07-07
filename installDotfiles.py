@@ -47,3 +47,5 @@ if directory_path != "":
 
 if lib.is_arch_linux():
     os.system('/bin/bash -c "sudo cp -r ~/.udev/rules/* /etc/udev/rules.d/."')
+    os.system("hyprctl reload")
+    os.system("sudo udevadm control --reload-rules && sudo udevadm trigger")
