@@ -14,7 +14,7 @@
     "disable-scroll": true,
     "all-outputs": true,
     "warp-on-scroll": false,
-    "format": "{name}",
+    "format": "{icon}",
     "format-icons": {
       "urgent": "",
       "active": "",
@@ -31,15 +31,15 @@
   },
   "pulseaudio": {
     "format": "{icon}  {volume}%",
-    "format-bluetooth": "{icon} {volume}%  {format_source}",
-    "format-bluetooth-muted": " {icon} {format_source}",
+    "format-bluetooth": "{icon}  {volume}% {format_source}",
+    "format-bluetooth-muted": "  {icon} {format_source}",
     "format-muted": " {format_source}",
     "format-source": " {volume}%",
     "format-source-muted": "",
     "format-icons": {
       "headphone": "",
-      "hands-free": "",
-      "headset": "",
+      "hands-free": "󱡏",
+      "headset": "󰋎",
       "phone": "",
       "portable": "",
       "car": "",
@@ -88,7 +88,8 @@
     "format": "  {}"
   },
   "tray": {
-    "spacing": 10
+    "spacing": 10,
+    "icon-size": 21
   },
   "battery": {
     "states": {
