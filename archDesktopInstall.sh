@@ -42,7 +42,7 @@ yay -S --noconfirm xdg-desktop-portal-hyprland-git
 yay -S --noconfirm QGtk3Style
 yay -S --noconfirm themix-full-git
 yay -S --noconfirm eww
-yay -S --noconfirm discord_arch_electron
+yay -S --noconfirm webcord
 yay -S --noconfirm hyprsysteminfo
 yay -S --noconfirm hyprcursor
 yay -S --noconfirm wlogout
