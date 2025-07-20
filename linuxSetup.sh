@@ -31,7 +31,7 @@ if [[ "$INSTALL_DESKTOPENV" == true ]]; then
     # If sway already on PATH, we’ll install QtGreet unconditionally later
     if command -v sway &> /dev/null; then
         INSTALL_SWAY=true
-    else
+    elif ! [ -f "/etc/arch-release" ]; then
         # Ask user if they want SwayWM
         read -p "SwayWM is not installed. Would you like to install SwayWM? [y/N] " sway_choice
         case "$sway_choice" in
@@ -231,13 +231,14 @@ elif [ -f "/etc/arch-release" ]; then
     print_message "Setting up for Arch"
     sudo pacman -Syu --noconfirm
     sudo pacman -S --noconfirm git
-    if ! command -v yay &> /dev/null; then
+    if ! command -v paru &> /dev/null; then
         sudo chown -R $USER:$USER /opt
         cd /opt
-        git clone https://aur.archlinux.org/yay-bin.git
-        cd yay-bin
-        sudo pacman -S base-devel
+        sudo pacman -S --noconfir --noconfirm --needed base-devel
+        git clone https://aur.archlinux.org/paru.git
+        cd paru
         makepkg -si
+        paru --gendb
         cd ~/
     fi
 
@@ -246,7 +247,7 @@ elif [ -f "/etc/arch-release" ]; then
     sudo pacman -S --noconfirm dotnet-runtime-8.0 dotnet-sdk-8.0
     sleep 10
     sudo dotnet tool install --global PowerShell
-    yay -S --noconfirm powershell-git
+    paru -S --noconfirm --skipreview powershell-git
     sudo pacman -S --noconfirm ripgrep
     sudo pacman -S --noconfirm direnv
     sudo pacman -S --noconfirm tmux

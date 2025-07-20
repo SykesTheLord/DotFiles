@@ -26,27 +26,27 @@ sudo pacman -S --noconfirm cargo
 sudo pacman -S --noconfirm ghostty
 sudo pacman -S --noconfirm tuned
 
-yay -S --noconfirm hyprland-git
-yay -S --noconfirm hyprlock-git
-yay -S --noconfirm hyprpaper-git
-yay -S --noconfirm hypridle-git
-yay -S --noconfirm fastfetch
-yay -S --noconfirm wofi
-yay -S --noconfirm waybar
-yay -S --noconfirm brightnessctl
+paru -S --noconfirm --skipreview hyprland-git
+paru -S --noconfirm --skipreview hyprlock-git
+paru -S --noconfirm --skipreview hyprpaper-git
+paru -S --noconfirm --skipreview hypridle-git
+paru -S --noconfirm --skipreview fastfetch
+paru -S --noconfirm --skipreview wofi
+paru -S --noconfirm --skipreview waybar
+paru -S --noconfirm --skipreview brightnessctl
 pacman -S --noconfirm uwsm
 # Enable services
 sudo systemctl enable swaync
-yay -S --noconfirm xdg-desktop-portal-hyprland-git
+paru -S --noconfirm --skipreview xdg-desktop-portal-hyprland-git
 
-yay -S --noconfirm QGtk3Style
-yay -S --noconfirm themix-full-git
-yay -S --noconfirm eww
-yay -S --noconfirm webcord
-yay -S --noconfirm hyprsysteminfo
-yay -S --noconfirm hyprcursor
-yay -S --noconfirm wlogout
-yay -S --noconfirm vmware-keymaps
-yay -S --noconfirm vmware-workstation
+paru -S --noconfirm --skipreview QGtk3Style
+paru -S --noconfirm --skipreview themix-full-git
+paru -S --noconfirm --skipreview eww
+paru -S --noconfirm --skipreview webcord
+paru -S --noconfirm --skipreview hyprsysteminfo
+paru -S --noconfirm --skipreview hyprcursor
+paru -S --noconfirm --skipreview wlogout
+paru -S --noconfirm --skipreview vmware-keymaps
+paru -S --noconfirm --skipreview vmware-workstation
 sudo cp -rv ~/.DotFiles/arch/.udev/rules/* /etc/udev/rules.d/.
 sudo ln -s ~/.scripts/opt /opt/scripts
