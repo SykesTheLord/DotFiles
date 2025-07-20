@@ -48,5 +48,8 @@ paru -S --noconfirm --skipreview hyprcursor
 paru -S --noconfirm --skipreview wlogout
 paru -S --noconfirm --skipreview vmware-keymaps
 paru -S --noconfirm --skipreview vmware-workstation
+sudo systemctl start vmware-networks-configuration.service
 sudo cp -rv ~/.DotFiles/arch/.udev/rules/* /etc/udev/rules.d/.
 sudo ln -s ~/.scripts/opt /opt/scripts
+
+echo "SkipReview" | sudo tee -a /etc/paru.conf
