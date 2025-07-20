@@ -239,6 +239,7 @@ elif [ -f "/etc/arch-release" ]; then
         cd paru
         makepkg -si
         paru --gendb
+        echo "SkipReview" | sudo tee -a /etc/paru.conf
         cd ~/
     fi
 
