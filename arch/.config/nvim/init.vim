@@ -9,6 +9,7 @@ Plug 'hrsh7th/cmp-nvim-lsp'                   " LSP source for nvim-cmp
 Plug 'hrsh7th/cmp-buffer'                     " Buffer words source
 Plug 'hrsh7th/cmp-path'                       " Filesystem paths source
 Plug 'hrsh7th/cmp-cmdline'                    " Vim command-line source
+Plug 'lukas-reineke/cmp-under-comparator'     " Improved sorting for auto-complete
 Plug 'L3MON4D3/LuaSnip', {'tag': 'v2.*', 'do': 'make install_jsregexp'}                      " Snippet engine
 Plug 'saadparwaiz1/cmp_luasnip'               " Snippet source for nvim-cmp
 Plug 'rafamadriz/friendly-snippets'           " Predefined snippet sets
@@ -34,8 +35,12 @@ Plug 'mhartington/formatter.nvim'
 Plug 'tpope/vim-obsession'
 Plug 'RaafatTurki/corn.nvim'
 Plug 'Weissle/persistent-breakpoints.nvim'
+Plug 'jiaoshijie/undotree'                  " Undotree instead
 call plug#end()
 
+
+" Enable persistent undo
+set undofile
 " ========== Basic Settings ==========
 set number              " Show line numbers
 syntax on               " Enable syntax highlighting
@@ -53,6 +58,10 @@ set clipboard=unnamedplus            " Use system clipboard by default
 set encoding=utf-8      " Ensure UTF-8 encoding
 set history=5000        " Increase command history size
 filetype plugin indent on  " Enable filetype-specific plugins & indent
+
+" Enable persistent undo
+set undofile
+set undodir=~/Development/.history//
 
 colorscheme dracula     " Set colorscheme (requires dracula.nvim)
 
@@ -245,7 +254,19 @@ cmp.setup({
     { name = "path", option = { get_cwd = get_project_root } },
     { name = "sql" },
     { name = "nvim_lsp_signature_help" }
-  })
+  }),
+  sorting = {
+        comparators = {
+            cmp.config.compare.offset,
+            cmp.config.compare.exact,
+            cmp.config.compare.score,
+            require "cmp-under-comparator".under,
+            cmp.config.compare.kind,
+            cmp.config.compare.sort_text,
+            cmp.config.compare.length,
+            cmp.config.compare.order,
+        },
+    },
 })
 
 -- Setup command-line (:) completion for NeoVim commands.
@@ -893,6 +914,34 @@ require 'corn'.setup {
   end,
 }
 
+-- Setup undotree functions
+local undotree = require('undotree')
+
+undotree.setup({
+  float_diff = true,  -- using float window previews diff, set this `true` will disable layout option
+  layout = "left_bottom", -- "left_bottom", "left_left_bottom"
+  position = "left", -- "right", "bottom"
+  ignore_filetype = { 'undotree', 'undotreeDiff', 'qf', 'TelescopePrompt', 'spectre_panel', 'tsplayground' },
+  window = {
+    winblend = 30,
+  },
+  keymaps = {
+    ['j'] = "move_next",
+    ['k'] = "move_prev",
+    ['gj'] = "move2parent",
+    ['J'] = "move_change_next",
+    ['K'] = "move_change_prev",
+    ['<cr>'] = "action_enter",
+    ['p'] = "enter_diffbuf",
+    ['q'] = "quit",
+  },
+})
+
+vim.keymap.set('n', '<leader>u', require('undotree').toggle, { noremap = true, silent = true })
+
+-- or
+vim.keymap.set('n', '<leader>uo', require('undotree').open, { noremap = true, silent = true })
+vim.keymap.set('n', '<leader>uc', require('undotree').close, { noremap = true, silent = true })
 EOF
 
 " ========== NERDTree Auto-open on Startup =========="
@@ -939,6 +988,7 @@ nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep()<CR>
 nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<CR>
 nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<CR>
 nnoremap <leader>fd <cmd>lua require('telescope.builtin').diagnostics()<CR>
+
 
 
 
