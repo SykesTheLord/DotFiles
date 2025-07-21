@@ -552,6 +552,8 @@ mkdir ~/Development
 mkdir ~/Development/Personal
 mkdir ~/Development/School
 mkdir ~/Development/Work
+mkdir ~/Development/.history
+
 
 if [ "$INSTALL_DESKTOPENV" = true ]; then
     sudo timedatectl set-local-rtc 1
