@@ -235,11 +235,9 @@ elif [ -f "/etc/arch-release" ]; then
         sudo chown -R $USER:$USER /opt
         cd /opt
         sudo pacman -S --noconfirm --needed base-devel
-        git clone https://aur.archlinux.org/paru.git
-        cd paru
+        git clone https://aur.archlinux.org/yay-bin.git
+        cd yay-bin
         makepkg -si
-        paru --gendb
-        echo "SkipReview" | sudo tee -a /etc/paru.conf
         cd ~/
     fi
 
@@ -248,7 +246,7 @@ elif [ -f "/etc/arch-release" ]; then
     sudo pacman -S --noconfirm dotnet-runtime-8.0 dotnet-sdk-8.0
     sleep 10
     sudo dotnet tool install --global PowerShell
-    paru -S --noconfirm powershell-git
+    yay -S --noconfirm powershell-git
     sudo pacman -S --noconfirm ripgrep
     sudo pacman -S --noconfirm direnv
     sudo pacman -S --noconfirm tmux
