@@ -990,6 +990,30 @@ nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<CR>
 nnoremap <leader>fd <cmd>lua require('telescope.builtin').diagnostics()<CR>
 
 
+function! CheckAndRunCommand()
+    " Get the directory of the current buffer
+    let l:current_dir = expand('%:p:h')
+
+    " Check if CMakeLists.txt exists in the current directory or its parents
+    let l:cmake_file = findfile('CMakeLists.txt', l:current_dir . ';')
+
+    if !empty(l:cmake_file)
+        " Get the directory of the CMakeLists.txt file
+        let l:cmake_dir = fnamemodify(l:cmake_file, ':p:h')
+
+        " Run your desired command here
+        " For example, to echo the directory path (replace with your command)
+        echo "Found CMakeLists.txt in: " . l:cmake_dir
+
+        " Example command: cd to the directory and run a command
+        execute ':cd ' . l:cmake_dir
+        silent execute '!cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=1'
+    endif
+endfunction
+
+" Set up an autocommand for C and Cpp files
+autocmd BufEnter *.c,*.cpp call CheckAndRunCommand()
+
 
 
 " Require linter"
