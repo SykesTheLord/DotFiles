@@ -548,6 +548,8 @@ chmod +x ~/nerd-fonts/install.sh
 cd
 sudo ./nerd-fonts/install.sh -q -S
 
+cd ~
+
 mkdir ~/Development
 mkdir ~/Development/Personal
 mkdir ~/Development/School
