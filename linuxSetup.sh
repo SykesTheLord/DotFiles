@@ -522,8 +522,7 @@ chmod +x ./bicep
 sudo mv ./bicep /usr/local/bin/bicep
 
 
-cd .DotFiles
-bash NvimSetup.sh
+bash ~/.DotFiles/NvimSetup.sh
 
 # Install Terraform autocomplete
 if command -v terraform &>/dev/null; then
