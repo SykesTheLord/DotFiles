@@ -35,18 +35,36 @@ if directory_path != "":
         directories.append(directory.replace(directory_path, ""))
     for file in files_tmp:
         files.append(file.replace(directory_path, ""))
+    filesTracked = ""
+    directoriesTracked = ""
     print("doing directories")
     for directory in directories:
+        directoriesTracked = directoriesTracked + directory + "\n"
         if directory.startswith(".config"):
             command = "cp -a -v ~/" + directory + " " + directory_path + ".config/"
         else:
             command = "cp -a -v ~/" + directory + " " + directory_path
-        print(command)
         if ".config/hypr/components/monitors.conf" not in command:
+            # if not directory.endswith(".config"):
+            #    os.system(
+            #        #'/bin/bash -c "rm -rf '
+            #        #+ command.replace("cp -a -v ~/" + directory + " ", "")
+            #        #+ '"'
+            #    #)
             os.system('/bin/bash -c "' + command + '"')
     print("doing files")
     for file in files:
+        filesTracked = filesTracked + directory + "\n"
         command = "cp -a -v ~/" + file + " " + directory_path + file
-        print(command)
         if ".config/hypr/components/monitors.conf" not in command:
+            # os.system(
+            #     '/bin/bash -c "rm -rf '
+            #     + command.replace("cp -a -v ~/" + file + " ", "")
+            #     + '"'
+            # )
             os.system('/bin/bash -c "' + command + '"')
+
+filesFile = open("filesTracked.txt", "w")
+filesFile.write(filesTracked)
+directoriesFile = open("directoriesTracked.txt", "w")
+directoriesFile.write(directoriesTracked)

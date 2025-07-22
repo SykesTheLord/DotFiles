@@ -39,8 +39,6 @@ Plug 'jiaoshijie/undotree'                  " Undotree instead
 call plug#end()
 
 
-" Enable persistent undo
-set undofile
 " ========== Basic Settings ==========
 set number              " Show line numbers
 syntax on               " Enable syntax highlighting
@@ -304,18 +302,6 @@ local on_attach = function(client, bufnr)
   buf_set_keymap('n', '[d', '<Cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
   buf_set_keymap('n', ']d', '<Cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
   buf_set_keymap('n', '<space>q', '<Cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
-  --[[ Previous config 
-  buf_set_keymap('n', '<C-k>', '<Cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
-  buf_set_keymap('n', '<C-r>', '<Cmd>lua vim.lsp.buf.rename()<CR>', opts)
-  buf_set_keymap('n', '<leader>ca', '<Cmd>lua vim.lsp.buf.code_action()<CR>', opts)
-  grr gra grn gri i_CTRL-S Some keymaps are created unconditionally when Nvim starts:
-  "grn" is mapped in Normal mode to vim.lsp.buf.rename()
-  "gra" is mapped in Normal and Visual mode to vim.lsp.buf.code_action()
-  "grr" is mapped in Normal mode to vim.lsp.buf.references()
-  "gri" is mapped in Normal mode to vim.lsp.buf.implementation()
-  "gO" is mapped in Normal mode to vim.lsp.buf.document_symbol()
-  CTRL-S is mapped in Insert mode to vim.lsp.buf.signature_help()
-]]
 
 end
 
@@ -938,8 +924,6 @@ undotree.setup({
 })
 
 vim.keymap.set('n', '<leader>u', require('undotree').toggle, { noremap = true, silent = true })
-
--- or
 vim.keymap.set('n', '<leader>uo', require('undotree').open, { noremap = true, silent = true })
 vim.keymap.set('n', '<leader>uc', require('undotree').close, { noremap = true, silent = true })
 EOF

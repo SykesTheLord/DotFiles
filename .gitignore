@@ -408,3 +408,5 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/jetbrains+all,python,pycharm+all,rider,linux,windows
 
+filesTracked.txt
+directoriesTracked.txt
