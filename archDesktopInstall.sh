@@ -8,10 +8,7 @@ sudo pacman -S --noconfirm kitty
 sudo pacman -S --noconfirm wl-clipboard
 sudo pacman -S --noconfirm gnome-keyring
 sudo pacman -S --noconfirm libsecret
-sudo pacman -S --noconfirm slurp
-sudo pacman -S --noconfirm grim
 sudo pacman -S --noconfirm imagemagick
-sudo pacman -S --noconfirm swappy
 sudo pacman -S --noconfirm spotify-launcher
 sudo pacman -S --noconfirm pavucontrol
 sudo pacman -S --noconfirm rofi
@@ -38,7 +35,8 @@ pacman -S --noconfirm uwsm
 # Enable services
 sudo systemctl enable swaync
 yay -S --noconfirm xdg-desktop-portal-hyprland-git
-
+yay -S --noconfirm hyprpicker
+yay -S --noconfirm hyprshot
 yay -S --noconfirm QGtk3Style
 yay -S --noconfirm themix-full-git
 yay -S --noconfirm eww
@@ -46,6 +44,7 @@ yay -S --noconfirm webcord
 yay -S --noconfirm hyprsysteminfo
 yay -S --noconfirm hyprcursor
 yay -S --noconfirm wlogout
+yay -S --noconfirm lazydocker
 yay -S --noconfirm vmware-keymaps
 yay -S --noconfirm vmware-workstation
 sudo systemctl start vmware-networks-configuration.service
