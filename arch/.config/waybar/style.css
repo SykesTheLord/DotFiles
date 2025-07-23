@@ -6,8 +6,8 @@
 }
 
 window#waybar {
-    background: rgba(26, 27, 38, 0.75);
-    color: #c0caf5;
+    background: #222630;
+    color: #88C0D0;
     font-family: 
         SpaceMono Nerd Font,
         feather;
@@ -18,7 +18,7 @@ window#waybar {
 .modules-center,
 .modules-right
 {
-    background: rgba(0, 0, 8, .7);
+    background: #191D24;
     margin: 5px 10px;
     padding: 0 5px;
     border-radius: 15px;
@@ -42,13 +42,15 @@ window#waybar {
 #wireplumber,
 #custom-media,
 #tray,
+#bluetooth,
+#custom-expand-icon,
 #mode,
 #idle_inhibitor,
 #scratchpad,
 #power-profiles-daemon,
 #language,
 #mpd {
-    padding: 0 10px;
+    padding: 2 10px;
     border-radius: 15px;
 }
 
@@ -64,13 +66,14 @@ window#waybar {
 #wireplumber:hover,
 #custom-media:hover,
 #tray:hover,
+#bluetooth:hover,
 #mode:hover,
 #idle_inhibitor:hover,
 #scratchpad:hover,
 #power-profiles-daemon:hover,
 #language:hover,
 #mpd:hover {
-    background: rgba(26, 27, 38, 0.9);
+    background: #434C5E;
 }
 
 
@@ -96,10 +99,14 @@ window#waybar {
   box-shadow: none;
 }
 
+#window {
+    padding: 2 5px;
+}
+
 #custom-arch {
     margin-left: 5px;
     padding: 0 10px;
-    font-size: 25px;
+    font-size: 15px;
     transition: color .5s;
 }
 #custom-arch:hover {
