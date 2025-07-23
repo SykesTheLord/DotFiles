@@ -22,3 +22,4 @@ elif [ "$monitor_count" -ge 2 ]; then
 else
     echo "No active monitors detected!"
 fi
+

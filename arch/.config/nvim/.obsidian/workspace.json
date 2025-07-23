@@ -1,0 +1,183 @@
+{
+  "main": {
+    "id": "f7a64861f64ed3aa",
+    "type": "split",
+    "children": [
+      {
+        "id": "2353d6f35cc9a32e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d548af29b21070d6",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "ai.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "ai"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "46e0e39f87ce2614",
+    "type": "split",
+    "children": [
+      {
+        "id": "2474b2c1c138324b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "bde05fb36e76b2dc",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "81cf64ade7028a12",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "1fc072aeb5363268",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "a64548d1f7612b15",
+    "type": "split",
+    "children": [
+      {
+        "id": "e14edfb6cea7443b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f8d159c48378cec5",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "ai.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for ai"
+            }
+          },
+          {
+            "id": "dbcd41b6d1795c9a",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "ai.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from ai"
+            }
+          },
+          {
+            "id": "a695a851e8683632",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "67375b96d1a4b54f",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "ai.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of ai"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false
+    }
+  },
+  "active": "d548af29b21070d6",
+  "lastOpenFiles": [
+    "lazy-lock.json",
+    "init.lua",
+    "init.vim.bak",
+    "lua/keymap.lua",
+    "lua/telescope.lua",
+    "lua/ui.lua",
+    "lua/lsp.lua",
+    "lua/plugins/init.lua",
+    "NeovimKeybinds.md"
+  ]
+}
