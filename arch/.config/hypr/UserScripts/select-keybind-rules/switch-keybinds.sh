@@ -14,12 +14,11 @@ done
 monitor_count=$(hyprctl monitors | grep -c '^Monitor')
 
 if [ "$monitor_count" -eq 1 ]; then
-    cp ~/.config/hypr/UserScripts/select-keybind-rules/laptop-only-keybinds.conf ~/.config/hypr/components/UserKeybinds.conf
+    cp ~/.config/hypr/UserScripts/select-keybind-rules/laptop-only-keybinds.conf ~/.config/hypr/components/lid-actions.conf
     echo "Loaded single-monitor config"
 elif [ "$monitor_count" -ge 2 ]; then
-    cp ~/.config/hypr/UserScripts/select-keybind-rules/external-displays-keybinds.conf ~/.config/hypr/components/UserKeybinds.conf
+    cp ~/.config/hypr/UserScripts/select-keybind-rules/external-displays-keybinds.conf ~/.config/hypr/components/lid-actions.conf
     echo "Loaded multi-monitor config"
 else
     echo "No active monitors detected!"
 fi
-
