@@ -17,9 +17,7 @@
 -- vim.fn.sign_define("DiagnosticSignWarn", { text = " ", texthl = "DiagnosticSignWarn" })
 -- vim.fn.sign_define("DiagnosticSignInfo", { text = " ", texthl = "DiagnosticSignInfo" })
 -- vim.fn.sign_define("DiagnosticSignHint", { text = "󰌵", texthl = "DiagnosticSignHint" })
-
 vim.keymap.set("n", "<leader>e", "<Cmd>Neotree reveal<CR>")
-
 require("neo-tree").setup({
     close_if_last_window = false, -- Close Neo-tree if it is the last window left in the tab
     popup_border_style = "NC",    -- or "" to use 'winborder' on Neovim v0.11+
@@ -128,6 +126,7 @@ require("neo-tree").setup({
         symlink_target = {
             enabled = false,
         },
+        show_path = "relative"
     },
     -- A list of functions, each representing a global custom command
     -- that will be available in all sources (if not overridden in `opts[source_name].commands`)
@@ -177,7 +176,7 @@ require("neo-tree").setup({
                 -- this command supports BASH style brace expansion ("x{a,b,c}" -> xa,xb,xc). see `:h neo-tree-file-actions` for details
                 -- some commands may take optional config options, see `:h neo-tree-mappings` for details
                 config = {
-                    show_path = "none", -- "none", "relative", "absolute"
+                    show_path = "relative", -- "none", "relative", "absolute"
                 },
             },
             ["A"] = "add_directory", -- also accepts the optional config.show_path option like "add". this also supports BASH style brace expansion.
@@ -304,7 +303,6 @@ require("neo-tree").setup({
                 -- ["key"] = function(state, scroll_padding) ... end,
             },
         },
-
         commands = {}, -- Add a custom command or override a global one using the same function name
     },
     buffers = {
@@ -361,4 +359,104 @@ require("neo-tree").setup({
             },
         },
     },
+    document_symbols = {
+        follow_cursor = false,
+        client_filters = "first",
+        renderers = {
+          root = {
+            {"indent"},
+            {"icon", default="C" },
+            {"name", zindex = 10},
+          },
+          symbol = {
+            {"indent", with_expanders = true},
+            {"kind_icon", default="?" },
+            {"container",
+            content = {
+              {"name", zindex = 10},
+              {"kind_name", zindex = 20, align = "right"},
+              }
+            }
+          },
+        },
+        window = {
+          position = "right",
+          mappings = {
+            ["<cr>"] = "jump_to_symbol",
+            ["o"] = "jump_to_symbol",
+            ["A"] = "noop", -- also accepts the config.show_path and config.insert_as options.
+            ["d"] = "noop",
+            ["y"] = "noop",
+            ["x"] = "noop",
+            ["p"] = "noop",
+            ["c"] = "noop",
+            ["m"] = "noop",
+            ["a"] = "noop",
+            ["/"] = "filter",
+            ["f"] = "filter_on_submit",
+          },
+        },
+        custom_kinds = {
+          -- define custom kinds here (also remember to add icon and hl group to kinds)
+          -- ccls
+          -- [252] = 'TypeAlias',
+          -- [253] = 'Parameter',
+          -- [254] = 'StaticMethod',
+          -- [255] = 'Macro',
+        },
+        kinds = {
+          Unknown = { icon = "?", hl = "" },
+          Root = { icon = "", hl = "NeoTreeRootName" },
+          File = { icon = "󰈙", hl = "Tag" },
+          Module = { icon = "", hl = "Exception" },
+          Namespace = { icon = "󰌗", hl = "Include" },
+          Package = { icon = "󰏖", hl = "Label" },
+          Class = { icon = "󰌗", hl = "Include" },
+          Method = { icon = "", hl = "Function" },
+          Property = { icon = "󰆧", hl = "@property" },
+          Field = { icon = "", hl = "@field" },
+          Constructor = { icon = "", hl = "@constructor" },
+          Enum = { icon = "󰒻", hl = "@number" },
+          Interface = { icon = "", hl = "Type" },
+          Function = { icon = "󰊕", hl = "Function" },
+          Variable = { icon = "", hl = "@variable" },
+          Constant = { icon = "", hl = "Constant" },
+          String = { icon = "󰀬", hl = "String" },
+          Number = { icon = "󰎠", hl = "Number" },
+          Boolean = { icon = "", hl = "Boolean" },
+          Array = { icon = "󰅪", hl = "Type" },
+          Object = { icon = "󰅩", hl = "Type" },
+          Key = { icon = "󰌋", hl = "" },
+          Null = { icon = "", hl = "Constant" },
+          EnumMember = { icon = "", hl = "Number" },
+          Struct = { icon = "󰌗", hl = "Type" },
+          Event = { icon = "", hl = "Constant" },
+          Operator = { icon = "󰆕", hl = "Operator" },
+          TypeParameter = { icon = "󰊄", hl = "Type" },
+
+          -- ccls
+          -- TypeAlias = { icon = ' ', hl = 'Type' },
+          -- Parameter = { icon = ' ', hl = '@parameter' },
+          -- StaticMethod = { icon = '󰠄 ', hl = 'Function' },
+          -- Macro = { icon = ' ', hl = 'Macro' },
+        }
+      },
+      example = {
+        renderers = {
+          custom = {
+            {"indent"},
+            {"icon", default="C" },
+            {"custom"},
+            {"name"}
+          }
+        },
+        window = {
+          mappings = {
+            ["<cr>"] = "toggle_node",
+            ["<C-e>"] = "example_command",
+            ["d"] = "show_debug_info",
+          },
+        },
+      }
 })
+
