@@ -24,7 +24,7 @@ local on_attach = function(client, bufnr)
 end
 
 vim.api.nvim_create_autocmd({"BufEnter", "FileType"}, {
-    pattern = {"*.py", "*.md", "*.c", "*.cpp", "*.h", "*.java", "*.go", "*.lua", "*.sh"},
+    pattern = {"*.py", "*.c", "*.cpp", "*.h", "*.java", "*.go", "*.lua", "*.sh"},
     callback = function()
         vim.cmd("Neotree document_symbols")
     end,
