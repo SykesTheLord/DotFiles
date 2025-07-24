@@ -34,23 +34,19 @@ return {
         branch = "v3.x",
         dependencies = {
             "nvim-lua/plenary.nvim",
-            "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
+            "nvim-tree/nvim-web-devicons",
             "MunifTanjim/nui.nvim",
-            -- {"3rd/image.nvim", opts = {}}, -- Optional image support in preview window: See `# Preview Mode` for more information
             {
-                "s1n7ax/nvim-window-picker", -- for open_with_window_picker keymaps
+                "s1n7ax/nvim-window-picker",
                 version = "2.*",
                 config = function()
                     require("window-picker").setup({
                         filter_rules = {
                             include_current_win = false,
                             autoselect_one = true,
-                            -- filter using buffer options
                             bo = {
-                                -- if the file type is one of following, the window will be ignored
                                 filetype = { "neo-tree", "neo-tree-popup", "notify" },
-                                -- if the buffer type is one of following, the window will be ignored
-                                buftype = { "terminal", "quickfix" },
+                                buftype  = { "terminal", "quickfix" },
                             },
                         },
                     })
@@ -58,8 +54,44 @@ return {
             },
         },
         lazy = false,
-        config = function() require("configs.neotreeConfig") end,
-    },                           -- **LSP and Completion**
+        config = function()
+            local ft_list = {
+                "python", "java", "cs", "c", "cpp",
+                "javascript", "typescript", "sh", "lua", "ps1",
+            }
+
+            local group = vim.api.nvim_create_augroup("NeotreeDocumentSymbols", { clear = true })
+            vim.api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
+                group = group,
+                callback = function()
+                    local ft = vim.bo.filetype
+                    if vim.tbl_contains(ft_list, ft) and not vim.b.neotree_symbols_shown then
+                        local cur_win = vim.api.nvim_get_current_win()
+
+                        -- open/reveal the document_symbols pane on the right
+                        require("neo-tree.command").execute({
+                            source   = "document_symbols",
+                            position = "right",
+                            toggle   = false,
+                            focus    = false,
+                        })
+
+                        -- schedule a restore only if cur_win is a valid win ID
+                        vim.schedule(function()
+                            if type(cur_win) == "number" and vim.api.nvim_win_is_valid(cur_win) then
+                                vim.api.nvim_set_current_win(cur_win)
+                            end
+                        end)
+
+                        vim.b.neotree_symbols_shown = true
+                    end
+                end,
+            })
+
+            require("configs.neotreeConfig")
+        end,
+    },
+    -- LSP and Autocompletion
     {
         "neovim/nvim-lspconfig", -- Core LSP support
         dependencies = {

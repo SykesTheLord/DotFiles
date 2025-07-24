@@ -23,14 +23,6 @@ local on_attach = function(client, bufnr)
     end
 end
 
-vim.api.nvim_create_autocmd({"BufEnter", "FileType"}, {
-    pattern = {"*.py", "*.c", "*.cpp", "*.h", "*.java", "*.go", "*.lua", "*.sh"},
-    callback = function()
-        vim.cmd("Neotree document_symbols")
-    end,
-    desc = "Open Neotree document symbols on relevant file types"
-})
-
 -- nvim-cmp integration: advertise completion capabilities to LSP servers
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 local ok, cmp_lsp = pcall(require, "cmp_nvim_lsp")

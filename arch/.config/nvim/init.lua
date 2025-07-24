@@ -32,6 +32,7 @@ vim.opt.hlsearch = false          -- don't highlight all search matches
 vim.opt.mouse = "a"               -- enable mouse in all modes
 vim.opt.clipboard = "unnamedplus" -- use system clipboard
 vim.opt.termguicolors = true      -- true color support
+vim.opt.filetype = "on"
 
 -- Load key mappings (non-plugin specific)
 require("keymap")
