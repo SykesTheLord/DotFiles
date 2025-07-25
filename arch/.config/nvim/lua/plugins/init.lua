@@ -422,6 +422,21 @@ return {
         ---@type ibl.config
         opts = {},
     },
+    {
+        "iamcco/markdown-preview.nvim",
+        cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+        build = "cd app && npm install",
+        init = function()
+            vim.g.mkdp_filetypes = { "markdown" }
+        end,
+        ft = { "markdown" },
+    },
+    {
+        "catgoose/nvim-colorizer.lua",
+        event = "BufReadPre",
+        opts = { -- set to setup table
+        },
+    },
     -- **Utility Plugins**
     { "tpope/vim-fugitive",       cmd = { "Git", "Gedit", "Gstatus", "Gdiffsplit", "Gpush", "Gpull" } },
     {
