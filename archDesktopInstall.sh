@@ -1,10 +1,8 @@
 #!/bin/bash
 sudo pacman -S --noconfirm swaync
-sudo pacman -S --noconfirm wireplumber
 sudo pacman -S --noconfirm pipewire
 sudo pacman -S --noconfirm qt6-wayland
 sudo pacman -S --noconfirm qt5-wayland
-sudo pacman -S --noconfirm kitty
 sudo pacman -S --noconfirm wl-clipboard
 sudo pacman -S --noconfirm gnome-keyring
 sudo pacman -S --noconfirm libsecret
@@ -21,7 +19,18 @@ sudo pacman -S --noconfirm font-config
 sudo pacman -S --noconfirm rustc
 sudo pacman -S --noconfirm cargo
 sudo pacman -S --noconfirm alacritty
-sudo pacman -S --noconfirm tuned
+sudo pacman -S --noconfirm tlp
+
+battery_found=false
+for bat in /sys/class/power_supply/BAT*; do
+    if [ -f "$bat/type" ] && grep -q "Battery" "$bat/type"; then
+        battery_found=true
+        break
+    fi
+done
+if [ "$battery_found" = true ]; then
+    yay -S --noconfirm tlp-rdw slimbookbattery
+fi
 
 yay -S --noconfirm hyprland
 yay -S --noconfirm hyprlock

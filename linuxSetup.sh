@@ -263,7 +263,48 @@ elif [ -f "/etc/arch-release" ]; then
     fi
 
     if [ "$INSTALL_DESKTOPENV" = true ]; then
+        NEW_INSTALL = false
+        read -p "Is there an existing Desktop Environment installed? [y/N] " new_choice
+        case "$new_choice" in
+            [Yy]* ) NEW_INSTALL=true ;;
+            * ) NEW_INSTALL=false ;;
+        esac
+
         print_message "Installing ArchDesktop Apps"
+        if [ "$NEW_INSTALL" = true ]; then
+            sudo pacman -Syu --noconfirm plasma-meta kde-applications-meta \
+              sddm xorg xdg-desktop-portal xdg-desktop-portal-kde \
+              networkmanager bluez bluez-utils \
+              pipewire wireplumber \
+              mesa vulkan-intel vulkan-radeon libva-mesa-driver mesa-vdpau \
+              powerdevil \
+              konsole dolphin ark spectacle okular \
+              firefox
+            sudo systemctl enable sddm
+            sudo systemctl enable NetworkManager
+            sudo systemctl enable bluetooth
+            CPU_INFO = "UNKNOWN"
+            if [ -f "/proc/cpuinfo" ]; then
+                vendor_id=$(grep -m 1 'vendor_id' /proc/cpuinfo | awk -F': ' '{print $2}' | xargs)
+
+                case "$vendor_id" in
+                    "GenuineIntel")
+                        CPU_INFO = "INTEL"
+                        ;;
+                    "AuthenticAMD")
+                        CPU_INFO = "AMD"
+                        ;;
+                    *)
+                        echo "CPU Vendor: Unknown ($vendor_id)"
+                        ;;
+                esac
+            fi
+            if [ "$CPU_INFO" = "INTEL" ]; then
+                sudo pacman -S --noconfirm intel-ucode
+            elif [ "$CPU_INFO" = "AMD" ]; then
+                sudo pacman -S --noconfirm amd-ucode
+            fi
+        fi
         # Install required programs
         cd .DotFiles
         bash archDesktopInstall.sh
