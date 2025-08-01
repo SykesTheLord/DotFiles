@@ -45,23 +45,12 @@ if directory_path != "":
         else:
             command = "cp -a -v ~/" + directory + " " + directory_path
         if ".config/hypr/components/monitors.conf" not in command:
-            # if not directory.endswith(".config"):
-            #    os.system(
-            #        #'/bin/bash -c "rm -rf '
-            #        #+ command.replace("cp -a -v ~/" + directory + " ", "")
-            #        #+ '"'
-            #    #)
             os.system('/bin/bash -c "' + command + '"')
     print("doing files")
     for file in files:
         filesTracked = filesTracked + directory + "\n"
         command = "cp -a -v ~/" + file + " " + directory_path + file
         if ".config/hypr/components/monitors.conf" not in command:
-            # os.system(
-            #     '/bin/bash -c "rm -rf '
-            #     + command.replace("cp -a -v ~/" + file + " ", "")
-            #     + '"'
-            # )
             os.system('/bin/bash -c "' + command + '"')
 
 filesFile = open("filesTracked.txt", "w")

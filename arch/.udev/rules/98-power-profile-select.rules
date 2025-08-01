@@ -1,4 +1,0 @@
-# /etc/udev/rules.d/90-ac-adapter.rules
-SUBSYSTEM=="power_supply", KERNEL=="AC", ENV{POWER_SUPPLY_ONLINE}=="1", RUN+="/opt/scripts/power-switch.sh on"
-SUBSYSTEM=="power_supply", KERNEL=="AC", ENV{POWER_SUPPLY_ONLINE}=="0", RUN+="/opt/scripts/power-switch.sh off"
-

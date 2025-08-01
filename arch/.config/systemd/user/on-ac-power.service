@@ -1,6 +1,0 @@
-[Unit]
-Description=Triggered when AC is plugged in
-
-[Service]
-Type=oneshot
-ExecStart=%h/.scripts/setPowerProfileBalanced.sh
