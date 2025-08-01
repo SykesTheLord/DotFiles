@@ -102,6 +102,7 @@ source $ZSH/oh-my-zsh.sh
 alias vim="nvim"
 alias upNvim="updateNeovimConf"
 alias updateAll="updateAll"
+alias fd="fdfind"
 
 export PATH=$PATH:~/UserApps/win32yank
 export PATH=$PATH:~/UserApps/terraform

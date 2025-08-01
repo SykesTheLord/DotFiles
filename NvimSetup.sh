@@ -53,16 +53,6 @@ if ! command -v unzip &>/dev/null; then
     fi
 fi
 
-# Install vim-plug
-print_message "Installing vim-plug"
-curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
-    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-
-# Clone the configuration repository from GitHub
-print_message "Cloning configuration repository from GitHub"
-CONFIG_REPO="https://github.com/SykesTheLord/NeoVimConfig.git"
-CONFIG_DIR="$HOME/.config/nvim"
-
 if [ -d "$CONFIG_DIR" ]; then
     echo "Backup existing Neovim configuration to $CONFIG_DIR.bak"
     mv "$CONFIG_DIR" "$CONFIG_DIR.bak"
@@ -88,6 +78,28 @@ else
 
     else
         echo "Unsupported OS. Please install GO manually." >> toDo.txt
+    fi
+fi
+
+if command -v fd &>/dev/null; then
+    echo "FD already installed"
+else
+    if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Neon" ]]; then
+        sudo apt install -y fd-find
+
+    elif [[ "$DISTRO" == "Debian" ]]; then
+        sudo apt-get install -y fd-find
+
+    elif [ -f "/etc/arch-release" ]; then
+        sudo pacman -S --noconfirm fd
+
+    elif [ -f "/etc/fedora-release" ]; then
+        sudo dnf install -y fd-find
+    elif grep -qi "opensuse" /etc/os-release; then
+        sudo zypper install -y fd
+
+    else
+        echo "Unsupported OS. Please install FD manually." >> toDo.txt
     fi
 fi
 
