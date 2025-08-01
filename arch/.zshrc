@@ -103,9 +103,6 @@ alias vim="nvim"
 alias upNvim="bash ~/.config/updateNeovimConf.sh"
 alias updateAll="bash ~/.config/updateAll.sh"
 
-export PATH=$PATH:~/UserApps/win32yank
-export PATH=$PATH:~/UserApps/terraform
-export PATH=$PATH:~/UserApps/zen
 export PATH=$PATH:~/.dotnet/tools
 export PATH=$PATH:~/UserApps/nuget
 export PATH=$PATH:~/UserApps/tmux-sessionizer
@@ -121,10 +118,10 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # fnm
-FNM_PATH="/home/jasb/.local/share/fnm"
+FNM_PATH="$HOME/.local/share/fnm"
 if [ -d "$FNM_PATH" ]; then
-    export PATH="/home/jasb/.local/share/fnm:$PATH"
-    eval "`fnm env`"
+export PATH="$HOME/.local/share/fnm:$PATH"
+eval "`fnm env`"
 fi
 
 
@@ -133,7 +130,7 @@ eval "$(direnv hook zsh)"
 
 # Run Fastfetch on start
 if [[ $- == *i* ]] && command -v fastfetch &>/dev/null; then
-    fastfetch
+fastfetch
 fi
 
 autoload -U +X bashcompinit && bashcompinit

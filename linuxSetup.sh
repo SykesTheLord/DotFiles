@@ -263,7 +263,7 @@ elif [ -f "/etc/arch-release" ]; then
     fi
 
     if [ "$INSTALL_DESKTOPENV" = true ]; then
-        NEW_INSTALL = false
+        NEW_INSTALL=false
         read -p "Is there an existing Desktop Environment installed? [y/N] " new_choice
         case "$new_choice" in
             [Yy]* ) NEW_INSTALL=true ;;
@@ -289,10 +289,10 @@ elif [ -f "/etc/arch-release" ]; then
 
                 case "$vendor_id" in
                     "GenuineIntel")
-                        CPU_INFO = "INTEL"
+                        CPU_INFO="INTEL"
                         ;;
                     "AuthenticAMD")
-                        CPU_INFO = "AMD"
+                        CPU_INFO="AMD"
                         ;;
                     *)
                         echo "CPU Vendor: Unknown ($vendor_id)"
@@ -549,8 +549,6 @@ else
         am -i ghostty
     fi
     am -i obsidian
-    # Open Jetbrains for toolbox link
-    firefox https://www.jetbrains.com/toolbox-app/download/download-thanks.html?platform=linux
 fi
 
 
@@ -602,7 +600,7 @@ if [ "$INSTALL_DESKTOPENV" = true ]; then
     sudo timedatectl set-local-rtc 1
 fi
 
-cd .DotFiles
+cd ~/.DotFiles
 python3 installDotfiles.py
 cd
 

@@ -410,3 +410,4 @@ $RECYCLE.BIN/
 
 filesTracked.txt
 directoriesTracked.txt
+**/lazy-lock.json
