@@ -253,6 +253,29 @@ elif [ -f "/etc/arch-release" ]; then
     sudo pacman -S --noconfirm fzf
     yay -S --noconfirm dnsutils
 
+    if ! command -v ufw &>/dev/null; then
+        yay -Sy --noconfirm --needed ufw ufw-docker
+
+        # Allow nothing in, everything out
+        sudo ufw default deny incoming
+        sudo ufw default allow outgoing
+
+        # Allow ports for LocalSend
+        sudo ufw allow 53317/udp
+        sudo ufw allow 53317/tcp
+
+        # Allow Docker containers to use DNS on host
+        sudo ufw allow in on docker0 to any port 53
+
+        # Turn on the firewall
+        sudo ufw enable
+
+        # Turn on Docker protections
+        sudo ufw-docker install
+        sudo ufw reload
+    fi
+
+
 
     if lspci | grep -qi nvidia; then
         print_message "NVIDIA GPU detected. Installing drivers..."
@@ -284,7 +307,7 @@ elif [ -f "/etc/arch-release" ]; then
             sudo systemctl enable sddm
             sudo systemctl enable NetworkManager
             sudo systemctl enable bluetooth
-            CPU_INFO = "UNKNOWN"
+            CPU_INFO="UNKNOWN"
             if [ -f "/proc/cpuinfo" ]; then
                 vendor_id=$(grep -m 1 'vendor_id' /proc/cpuinfo | awk -F': ' '{print $2}' | xargs)
 
