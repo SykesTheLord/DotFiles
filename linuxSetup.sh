@@ -251,6 +251,7 @@ elif [ -f "/etc/arch-release" ]; then
     sudo pacman -S --noconfirm direnv
     sudo pacman -S --noconfirm tmux
     sudo pacman -S --noconfirm fzf
+    yay -S --noconfirm dnsutils
 
 
     if lspci | grep -qi nvidia; then
@@ -273,13 +274,13 @@ elif [ -f "/etc/arch-release" ]; then
         print_message "Installing ArchDesktop Apps"
         if [ "$NEW_INSTALL" = true ]; then
             sudo pacman -Syu --noconfirm plasma-meta kde-applications-meta \
-              sddm xorg xdg-desktop-portal xdg-desktop-portal-kde \
-              networkmanager bluez bluez-utils \
-              pipewire wireplumber \
-              mesa vulkan-intel vulkan-radeon libva-mesa-driver mesa-vdpau \
-              powerdevil \
-              konsole dolphin ark spectacle okular \
-              firefox
+                sddm xorg xdg-desktop-portal xdg-desktop-portal-kde \
+                networkmanager bluez bluez-utils \
+                pipewire wireplumber \
+                mesa vulkan-intel vulkan-radeon libva-mesa-driver mesa-vdpau \
+                powerdevil \
+                konsole dolphin ark spectacle okular \
+                firefox
             sudo systemctl enable sddm
             sudo systemctl enable NetworkManager
             sudo systemctl enable bluetooth
