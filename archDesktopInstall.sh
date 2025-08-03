@@ -32,6 +32,24 @@ if [ "$battery_found" = true ]; then
     yay -S --noconfirm tlp-rdw slimbookbattery
 fi
 
+kernel_release=$(uname -r)
+symlink_path="/boot/vmlinuz-$kernel_release"
+
+if [[ -L "$symlink_path" ]]; then
+    target=$(readlink "$symlink_path")
+    variant=$(basename "$target" | sed 's/vmlinuz-//')
+else
+    if [[ "$kernel_release" =~ -([a-z]+)$ ]]; then
+        variant="linux-${BASH_REMATCH[1]}"
+    else
+        variant="linux"
+    fi
+fi
+
+headerInstall="$variant-headers"
+
+yay -s --noconfirm $headerInstall
+
 yay -S --noconfirm hyprland
 yay -S --noconfirm hyprlock
 yay -S --noconfirm hyprpaper
