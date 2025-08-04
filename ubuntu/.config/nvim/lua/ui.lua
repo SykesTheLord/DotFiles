@@ -5,4 +5,4 @@
 vim.cmd.colorscheme("nordic")
 vim.opt.termguicolors = true
 require("bufferline").setup({})
--- vim.cmd('Neotree reveal left')
+vim.cmd("Neotree reveal left")
