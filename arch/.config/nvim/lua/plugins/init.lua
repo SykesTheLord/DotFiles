@@ -17,7 +17,7 @@ return {
     },
     {
         "folke/snacks.nvim",
-        priority = 1001,
+        priority = 1000,
         lazy = false,
         ---@type snacks.Config
         opts = {
@@ -33,7 +33,7 @@ return {
             picker = { enabled = true },
             quickfile = { enabled = true },
             scope = { enabled = true },
-            scroll = { enabled = true },
+            scroll = { enabled = false },
             statuscolumn = { enabled = true },
             words = { enabled = true },
             styles = {
@@ -1000,7 +1000,12 @@ return {
     {
         "catgoose/nvim-colorizer.lua",
         event = "BufReadPre",
-        opts = { -- set to setup table
+        opts = {
+            user_default_options = {
+                names = false,
+                css = true,
+                xterm = true,
+            },
         },
     },
     -- **Utility Plugins**
