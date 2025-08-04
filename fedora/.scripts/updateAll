@@ -12,16 +12,25 @@ if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Debian" || "$DISTRO" == "Neon" ]]; 
     # Ubuntu setup
     print_message "Updating for Debian based"
     sudo apt update && sudo apt upgrade -y
+    am -u
+    sudo flatpak update
+    print_message "Completed updates"
 
 elif [ -f "/etc/arch-release" ]; then
     # Arch Linux setup
     print_message "Updating for Arch"
-    sudo pacman -Syu --noconfirm
+    yay -Syu --noconfirm
+    am -u
+    sudo flatpak update
+    print_message "Completed updates"
 
 elif [ -f "/etc/fedora-release" ]; then
     # Fedora setup
     print_message "Updating for Fedora"
     sudo dnf update -y
+    am -u
+    sudo flatpak update
+    print_message "Completed updates"
 
 elif grep -qi "opensuse" /etc/os-release; then
     # openSUSE setup
@@ -29,20 +38,11 @@ elif grep -qi "opensuse" /etc/os-release; then
     sudo zypper refresh
     sudo zypper dup -y
     sudo zypper --non-interactive patch
-
+    am -u
+    sudo flatpak update
+    print_message "Completed updates"
 
 else
     echo "No supported Distro for install found"
     exit 1
 fi
-
-if [[ $(grep -i Microsoft /proc/version) && "$DISTRO" != "Ubuntu" && "$DISTRO" != "Debian" && "$DISTRO" != "Neon" ]]; then
-    updateNeovimConf
-    print_message "Completed updates"
-else
-    updateNeovimConf
-    am -u
-    sudo flatpak update
-    print_message "Completed updates"
-fi
-
