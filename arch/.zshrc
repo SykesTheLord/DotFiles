@@ -100,8 +100,7 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias vim="nvim"
-alias upNvim="bash ~/.config/updateNeovimConf.sh"
-alias updateAll="bash ~/.config/updateAll.sh"
+alias updateAll="bash ~/.scripts/updateAll"
 
 export PATH=$PATH:~/.dotnet/tools
 export PATH=$PATH:~/UserApps/nuget
@@ -120,8 +119,8 @@ export NVM_DIR="$HOME/.nvm"
 # fnm
 FNM_PATH="$HOME/.local/share/fnm"
 if [ -d "$FNM_PATH" ]; then
-export PATH="$HOME/.local/share/fnm:$PATH"
-eval "`fnm env`"
+    export PATH="$HOME/.local/share/fnm:$PATH"
+    eval "`fnm env`"
 fi
 
 
@@ -130,7 +129,7 @@ eval "$(direnv hook zsh)"
 
 # Run Fastfetch on start
 if [[ $- == *i* ]] && command -v fastfetch &>/dev/null; then
-fastfetch
+    fastfetch
 fi
 
 autoload -U +X bashcompinit && bashcompinit

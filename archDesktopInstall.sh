@@ -67,6 +67,7 @@ yay -S --noconfirm hyprshot
 yay -S --noconfirm QGtk3Style
 yay -S --noconfirm themix-full-git
 yay -S --noconfirm eww
+yay -S wl-clip-persist
 yay -S --noconfirm webcord
 yay -S --noconfirm hyprsysteminfo
 yay -S --noconfirm hyprcursor

@@ -15,6 +15,7 @@ monitor_count=$(hyprctl monitors | grep -c '^Monitor')
 
 if [ "$monitor_count" -eq 1 ]; then
     cp ~/.config/hypr/UserScripts/select-keybind-rules/laptop-only-keybinds.conf ~/.config/hypr/components/lid-actions.conf
+    bash ~/.config/hypr/UserScripts/select-keybind-rules/enable-builtin.sh
     echo "Loaded single-monitor config"
 elif [ "$monitor_count" -ge 2 ]; then
     cp ~/.config/hypr/UserScripts/select-keybind-rules/external-displays-keybinds.conf ~/.config/hypr/components/lid-actions.conf
