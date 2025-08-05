@@ -298,12 +298,7 @@ elif [ -f "/etc/arch-release" ]; then
         if [ "$NEW_INSTALL" = true ]; then
             sudo pacman -Syu --noconfirm kde-graphics-meta kde-multimedia-meta \
                 kde-network-meta kde-office-meta kde-pim-meta \
-                kde-sdk-meta kde-system-meta kde-utilities-meta kdevelop-meta  discover kinfocenter \
-                ksystemstats kwallet-pam layer-shell-qt libkscreen libksysguard \
-                plasma-disks plasma-firewall plasma-integration plasma-nm \
-                plasma-pa plasma-systemmonitor plasma-thunderbolt plasma-vault \
-                polkit-kde-agent print-manager \
-                sddm-kcm spectacle systemsettings \
+                kde-sdk-meta kde-system-meta kde-utilities-meta kdevelop-meta plasma-meta \
                 sddm xorg xdg-desktop-portal xdg-desktop-portal-kde \
                 networkmanager bluez bluez-utils \
                 pipewire wireplumber \
