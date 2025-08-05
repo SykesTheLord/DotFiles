@@ -77,3 +77,4 @@ yay -S --noconfirm vmware-workstation
 sudo systemctl start vmware-networks-configuration.service
 sudo cp -rv ~/.DotFiles/arch/.udev/rules/* /etc/udev/rules.d/.
 sudo ln -s ~/.scripts/opt /opt/scripts
+echo "HibernateDelaySec=1800" | sudo tee -a /etc/systemd/sleep.conf
