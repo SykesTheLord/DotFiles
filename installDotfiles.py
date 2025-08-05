@@ -51,6 +51,3 @@ if lib.is_arch_linux():
     os.system("sudo udevadm control --reload-rules && sudo udevadm trigger")
     os.system("systemctl enable --user --now omarchy-battery-monitor.timer")
     os.system("systemctl enable --user --now wallpaperset.service")
-    os.system("systemctl enable --user --now ")
-
-
