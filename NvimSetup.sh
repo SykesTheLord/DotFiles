@@ -182,9 +182,11 @@ if ! command -v tree-sitter &>/dev/null; then
     exit 1
 fi
 
+mkdir ~/Development/.history
+
 # Install plugins
 print_message "Installing plugins"
-nvim +PlugInstall +qall &
+nvim
 
 sleep 50
 
