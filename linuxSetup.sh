@@ -286,6 +286,8 @@ elif [ -f "/etc/arch-release" ]; then
         print_message "nvidia-dkms installation complete."
     fi
 
+    yay -S --noconfirm --needed ttf-font-awesome ttf-cascadia-mono-nerd ttf-ia-writer noto-fonts noto-fonts-emoji ttf-jetbrains-mono noto-fonts-cjk noto-fonts-extra
+
     if [ "$INSTALL_DESKTOPENV" = true ]; then
         NEW_INSTALL=false
         read -p "Is there an existing Desktop Environment installed? [y/N] " new_choice
