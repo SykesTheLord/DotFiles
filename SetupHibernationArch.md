@@ -65,6 +65,7 @@ This ensures the early userspace knows to include resume support before mounting
 
    ```bash
    sudo grub-mkconfig -o /boot/grub/grub.cfg
+   sudo grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --modules="tpm" --disable-shim-lock
    ```
 
 3. **Reboot** into the updated environment.

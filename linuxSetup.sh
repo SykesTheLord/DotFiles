@@ -558,24 +558,17 @@ if [[ $(grep -i Microsoft /proc/version) ]]; then
     unzip win32yank-x64.zip -d ~/UserApps/win32yank
     chmod +x ~/UserApps/win32yank/win32yank.exe
     if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Debian" ]]; then
-        # Download the installer script
-        wget -q https://raw.githubusercontent.com/ivan-hc/AM/main/AM-INSTALLER -O AM-INSTALLER
-
-        chmod a+x AM-INSTALLER
-        # Execute the modified script
-        ./AM-INSTALLER
+        wget -q "https://raw.githubusercontent.com/ivan-hc/AM/main/INSTALL" -O INSTALL-AM.sh && chmod a+x INSTALL-AM.sh
+        sudo ./INSTALL-AM.sh
     fi
 else
     # Download the installer script
-    wget -q https://raw.githubusercontent.com/ivan-hc/AM/main/AM-INSTALLER -O AM-INSTALLER
-    chmod a+x AM-INSTALLER
+    wget -q "https://raw.githubusercontent.com/ivan-hc/AM/main/INSTALL" -O INSTALL-AM.sh && chmod a+x INSTALL-AM.sh
+    sudo ./INSTALL-AM.sh
 
     # Execute the modified script
     ./AM-INSTALLER
     am -i zen-browser
-    if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Debian" || "$DISTRO" == "Neon" ]]; then
-        am -i ghostty
-    fi
     am -i obsidian
 fi
 
