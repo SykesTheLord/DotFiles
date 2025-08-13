@@ -1,6 +1,12 @@
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="sykes_custom_theme"
 plugins=(git zsh-syntax-highlighting zsh-autosuggestions docker kubectl dotnet terraform)
-source $ZSH/oh-my-zsh.sh 
+source $ZSH/oh-my-zsh.sh
+export PATH=$PATH:~/UserApps/terraform
+export PATH=$PATH:~/.dotnet/tools
+export PATH=$PATH:/snap/kubectl/3546
+export PATH=$PATH:/opt/nvim-linux-x86_64/bin
+export PATH=$PATH:/usr/local/go/bin
+export PATH=$PATH:~/.scripts/
 autoload -U +X bashcompinit && bashcompinit
 complete -o nospace -C /usr/bin/terraform terraform
