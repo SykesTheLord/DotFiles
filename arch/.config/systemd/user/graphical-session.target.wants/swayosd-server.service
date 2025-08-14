@@ -1,0 +1,16 @@
+[Unit]
+Description=OSD for display brightness and media controls
+PartOf=graphical-session.target
+Requires=graphical-session.target
+After=graphical-session.target
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/swayosd-server
+Slice=session.slice
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target
+
