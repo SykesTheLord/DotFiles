@@ -58,7 +58,8 @@ yay -S --noconfirm fastfetch
 yay -S --noconfirm wofi
 yay -S --noconfirm waybar
 yay -S --noconfirm brightnessctl
-pacman -S --noconfirm uwsm
+yay -S --noconfirm swayosd
+yay -S --noconfirm uwsm
 # Enable services
 sudo systemctl enable swaync
 yay -S --noconfirm xdg-desktop-portal-hyprland
