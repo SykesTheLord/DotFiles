@@ -1,3 +1,10 @@
+[ContentDisplay]
+UsePermissionsFormat=CombinedFormat
+UseShortRelativeDates=false
+
+[ContextMenu]
+ShowCopyMoveMenu=true
+
 [General]
 Version=202
 ViewPropsTimestamp=2025,6,6,8,35,50.492
@@ -8,6 +15,9 @@ Places Icons Static Size=22
 
 [MainWindow]
 MenuBar=Disabled
+
+[PreviewSettings]
+Plugins=appimagethumbnail,audiothumbnail,avif,blenderthumbnail,comicbookthumbnail,cursorthumbnail,djvuthumbnail,ebookthumbnail,exrthumbnail,directorythumbnail,fontthumbnail,pothumbnail,heif,imagethumbnail,calligraimagethumbnail,jpegthumbnail,jxl,kraorathumbnail,windowsexethumbnail,windowsimagethumbnail,mltpreview,mobithumbnail,opendocumentthumbnail,calligrathumbnail,gsthumbnail,quithumbnail,rawthumbnail,librsvg,svgthumbnail,itinerarythumbnail,ffmpegthumbs,webarchivethumbnail,gdk-pixbuf-thumbnailer
 
 [UiSettings]
 ColorScheme=*

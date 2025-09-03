@@ -101,6 +101,7 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias vim="nvim"
 alias updateAll="bash ~/.scripts/updateAll"
+alias batCon='awk "{print *1e-6  W}" /sys/class/power_supply/BAT0/power_now'
 
 export PATH=$PATH:~/.dotnet/tools
 export PATH=$PATH:~/UserApps/nuget
@@ -110,6 +111,7 @@ export PATH=$PATH:/snap/kubectl/3546
 export PATH=$PATH:/opt/nvim-linux-x86_64/bin
 export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:~/UserApps/eww
+export PATH=$PATH:~/UserApps/ghidra
 export PATH=$PATH:~/.scripts/
 
 export NVM_DIR="$HOME/.nvm"
