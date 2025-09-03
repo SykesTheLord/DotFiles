@@ -54,6 +54,7 @@ local servers = {
     "bicep",
     "yamlls",
     "arduino_language_server",
+    "ltex_plus"
 }
 for _, server in ipairs(servers) do
     lspconfig[server].setup({
