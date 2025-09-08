@@ -66,8 +66,7 @@
     "tooltip-format-ethernet": "⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}",
     "tooltip-format-disconnected": "Disconnected",
     "interval": 3,
-    "nospacing": 1,
-    "on-click": "sh ~/.scripts/wofi-wifi-menu.sh"
+    "nospacing": 1
   },
   "bluetooth": {
     "format-on": "󰂯",
@@ -82,7 +81,7 @@
   "cpu": {
     "interval": 5,
     "format": "󰍛",
-    "on-click": "alacritty -e btop"
+    "on-click": "alacritty --title=btop -e btop"
   },
   "memory": {
     "format": "  {used} GiB / {total}",
