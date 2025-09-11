@@ -138,7 +138,7 @@
       "transition-duration": 600,
       "children-class": "tray-group-item"
     },
-    "modules": ["custom/expand-icon", "tray", "temperature", "memory"]
+    "modules": ["custom/expand-icon", "tray", "memory"]
   },
   "custom/expand-icon": {
     "format": " ",

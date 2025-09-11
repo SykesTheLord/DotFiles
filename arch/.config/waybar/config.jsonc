@@ -26,7 +26,7 @@
         // "hyprland/language",
         "battery",
         "battery#bat2",
-        "power-profiles-daemon",
+        // "power-profiles-daemon",
         "custom/notification",
         "group/tray-expander",
         //"tray",
