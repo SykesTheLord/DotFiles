@@ -50,6 +50,7 @@ headerInstall="$variant-headers"
 
 yay -s --noconfirm $headerInstall
 
+yay -S --noconfirm cpio meson cmake pkg-config g++
 yay -S --noconfirm hyprland
 yay -S --noconfirm hyprlock
 yay -S --noconfirm hyprpaper
@@ -59,6 +60,10 @@ yay -S --noconfirm wofi
 yay -S --noconfirm waybar
 yay -S --noconfirm brightnessctl
 yay -S --noconfirm swayosd
+hyprpm update
+hyprpm add https://github.com/hyprwm/hyprland-plugins
+hyprpm enable xtra-dispatchers
+hyprpm enable hyprexpo
 yay -S --noconfirm uwsm
 # Enable services
 sudo systemctl enable swaync
@@ -68,7 +73,7 @@ yay -S --noconfirm hyprshot
 yay -S --noconfirm QGtk3Style
 yay -S --noconfirm themix-full-git
 yay -S --noconfirm eww
-yay -S wl-clip-persist
+yay -S --noconfirm satty cliphist
 yay -S --noconfirm webcord
 yay -S --noconfirm hyprsysteminfo
 yay -S --noconfirm hyprcursor
