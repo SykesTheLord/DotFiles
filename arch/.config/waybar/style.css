@@ -1,7 +1,8 @@
 * {
   /* `otf-font-awesome` and SpaceMono Nerd Font are required to be installed for icons */
   font-family:
-    "Fira Sans Semibold", FontAwesome, Roboto, Helvetica, Arial, sans-serif;
+    "CaskaydiaMono Nerd Font Semibold", FontAwesome, Roboto, Helvetica, Arial,
+    sans-serif;
   font-size: 15px;
   transition: background-color 0.3s ease-out;
 }
@@ -10,7 +11,7 @@ window#waybar {
   background: #222630;
   color: #88c0d0;
   font-family:
-    SpaceMono Nerd Font,
+    CaskaydiaMono Nerd Font,
     feather;
   transition: background-color 0.5s;
 }
