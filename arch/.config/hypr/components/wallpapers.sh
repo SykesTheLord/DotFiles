@@ -13,6 +13,6 @@ sleep 5
 # Build the hyprctl command with monitor-wallpaper pairs
 for monitor in "${MONITORS[@]}"; do
     WALLPAPER=$(find "$WALLPAPER_DIR" -type f ! -name "$(basename "$CURRENT_WALL")" | shuf -n 1)
-    hyprctl hyprpaper reload "$monitor","$WALLPAPER"
+    hyprctl hyprpaper wallpaper $monitor, $WALLPAPER, cover
 done
 
