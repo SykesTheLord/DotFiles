@@ -1,12 +1,6 @@
--- lua/plugins/init.lua
 return {
-
-    -- **Plugin Manager and Dependencies**
-
-    -- Lazy.nvim manages itself (already bootstrapped in init.lua)
-    { "folke/lazy.nvim",         lazy = true },
-
-    -- **Colorscheme** (with high priority so it loads first)
+    { "folke/lazy.nvim",    lazy = true },
+    -- Colorscheme
     {
         "AlexvZyl/nordic.nvim",
         lazy = false,
@@ -80,15 +74,6 @@ return {
                 end,
                 desc = "Notification History",
             },
-
-            -- File/Explorer -----------------------------------------------------------
-            -- {
-            -- 	"<leader>e",
-            -- 	function()
-            --		Snacks.explorer()
-            --	end,
-            --	desc = "File Explorer",
-            -- },
             {
                 "<leader>fc",
                 function()
@@ -552,10 +537,11 @@ return {
             })
         end,
     },
-    { "akinsho/bufferline.nvim", version = "*", dependencies = "nvim-tree/nvim-web-devicons" },
-    -- **File Explorer** (Neo-tree as NERDTree replacement)
-    -- If you want neo-tree's file operations to work with LSP (updating imports, etc.), you can use a plugin like
-    -- https://github.com/antosha417/nvim-lsp-file-operations:
+    {
+        "akinsho/bufferline.nvim",
+        version = "*",
+        dependencies = "nvim-tree/nvim-web-devicons",
+    },
     {
         "antosha417/nvim-lsp-file-operations",
         dependencies = {
@@ -636,78 +622,40 @@ return {
             require("configs.neotreeConfig")
         end,
     },
-    -- LSP and Autocompletion
     {
-        "neovim/nvim-lspconfig", -- Core LSP support
+        "williamboman/mason-lspconfig.nvim",
         dependencies = {
-            -- Mason to install LSP servers:contentReference[oaicite:12]{index=12}
             { "williamboman/mason.nvim", config = true },
-            {
-                "williamboman/mason-lspconfig.nvim",
-                config = function()
-                    require("mason-lspconfig").setup({
-                        ensure_installed = {},
-                        automatic_installation = true,
-                    })
-
-                    -- Force CSharp-ls version
-                    local registry = require("mason-registry")
-                    local pkg = registry.get_package("csharp-language-server")
-                    if not pkg:is_installed() then
-                        pkg:install({ version = "0.16.0" })
-                    end
-                end,
-            },
             {
                 "WhoIsSethDaniel/mason-tool-installer.nvim",
                 config = function()
                     require("mason-tool-installer").setup({
                         ensure_installed = {
-                            "trivy",              -- Linter for Various issues
-                            "csharpier",          -- C# formatter
-                            "netcoredbg",         -- C# debugger
-                            "black",              -- Python formatter
-                            "debugpy",            -- Python debugger
-                            "pylint",             -- Python Linter
-                            "eslint_d",           -- Javascript and TypeScript linter
-                            "jsonlint",           -- JSON linter
-                            "beautysh",           -- Bash, Csh, Zsh formatter
-                            "shellcheck",         -- Bash linter
-                            "prettierd",          -- Angular, CSS, Flow, GraphQL, HTML, JSON, JSX, JavaScript, LESS, Markdown, SCSS, TypeScript, Vue, and YAML formatter
+                            "trivy", -- Linter for various issues
+                            "csharpier", -- C# formatter
+                            "netcoredbg", -- C# debugger
+                            "black", -- Python formatter
+                            "debugpy", -- Python debugger
+                            "pylint", -- Python linter
+                            "eslint_d", -- JS/TS linter
+                            "jsonlint", -- JSON linter
+                            "beautysh", -- Shell formatter
+                            "shellcheck", -- Shell linter
+                            "prettierd", -- Formatter for web languages
                             "java-debug-adapter", -- Java debugger
-                            "clang-format",       -- C, C++, JSON, Java, and JavaScript formatter
-                            "stylua",             -- Lua formatter
-                            "luacheck",           -- Lua Linter
-                            "cmakelang",          -- CMake formatter and linter
-                            "sqlfluff",           -- SQL linter
-                            "sql-formatter",      -- SQL formatter
-                            "vale",               -- Markdown linter
-                            "tfsec",              -- Terraform linter
-                            "cpplint",            -- C++ linter
-                            "cmakelint",          -- CMake linter
-                            "htmlhint",           -- HTML linter
-                            "checkstyle",         -- Java linter
-                            "cpptools",           -- C. C++ and Rust debuggecpptools' -- C. C++ and Rust debugger
-                            "clangd",
-                            "eslint",
-                            "jedi_language_server",
-                            "jsonls",
-                            "yamlls",
-                            -- "omnisharp", -- (Handled separately below)
-                            "terraformls",
-                            "dockerls",
-                            "bashls",
-                            "docker_compose_language_service",
-                            "jdtls",
-                            "lua_ls",
-                            "marksman",
-                            "powershell_es",
-                            "cmake",
-                            "vimls",
-                            "bicep",
-                            "sqls",
-                            "arduino-language-server",
-                            "ltex-ls-plus",
+                            "clang-format", -- C/C++ formatter
+                            "stylua", -- Lua formatter
+                            "luacheck", -- Lua linter
+                            "cmakelang", -- CMake formatter/linter
+                            "sqlfluff", -- SQL linter
+                            "sql-formatter", -- SQL formatter
+                            "vale", -- Markdown linter
+                            "tfsec", -- Terraform linter
+                            "cpplint", -- C++ linter
+                            "cmakelint", -- CMake linter
+                            "htmlhint", -- HTML linter
+                            "checkstyle", -- Java linter
+                            "cpptools", -- C/C++/Rust debugger
                         },
                         automatic_installation = true,
                         auto_update = true,
@@ -720,35 +668,81 @@ return {
                     require("configs.cornConfig")
                 end,
             },
-            "hrsh7th/cmp-nvim-lsp", -- LSP source for nvim-cmp
-            "Decodetalkers/csharpls-extended-lsp.nvim",
+            "hrsh7th/cmp-nvim-lsp",            -- LSP source for nvim-cmp
+            "Decodetalkers/csharpls-extended-lsp.nvim", -- Extended C# LSP support
         },
         config = function()
-            require("lsp")
-        end,                                                                -- run our LSP setup (in lsp.lua)
+            require("mason-lspconfig").setup({
+                ensure_installed = {
+                    "clangd",
+                    "eslint",
+                    "jedi_language_server",
+                    "jsonls",
+                    "yamlls",
+                    -- "omnisharp",  -- (Handled separately below via csharp_ls)
+                    "terraformls",
+                    "dockerls",
+                    "bashls",
+                    "docker_compose_language_service",
+                    "jdtls",
+                    "lua_ls",
+                    "marksman",
+                    "powershell_es",
+                    "cmake",
+                    "vimls",
+                    "bicep",
+                    "sqls",
+                },
+                automatic_enable = false, -- we will manually enable servers
+            })
+            -- Ensure specific version of C# LSP (csharp_ls) is installed
+            local registry = require("mason-registry")
+            local pkg = registry.get_package("csharp-language-server")
+            if not pkg:is_installed() then
+                pkg:install({ version = "0.16.0" })
+            end
+            require("lspConfig") -- load our LSP setup configuration
+        end,
     },
-    { "simrat39/rust-tools.nvim", dependencies = "neovim/nvim-lspconfig" }, -- Rust enhanced LSP
 
     -- Autocompletion plugins (nvim-cmp and sources)
     {
         "hrsh7th/nvim-cmp",
-        event = "InsertEnter",
+        event = { "InsertEnter", "CmdlineEnter" },
         dependencies = {
-            "L3MON4D3/LuaSnip",                   -- snippet engine
-            "saadparwaiz1/cmp_luasnip",           -- snippet completions
-            "hrsh7th/cmp-buffer",                 -- buffer completions
-            "hrsh7th/cmp-path",                   -- filesystem path completions
-            "rafamadriz/friendly-snippets",       -- snippet collection
-            "lukas-reineke/cmp-under-comparator", -- rearrange comparator
+            "L3MON4D3/LuaSnip",          -- snippet engine
+            "saadparwaiz1/cmp_luasnip",  -- snippet source
+            "hrsh7th/cmp-buffer",        -- buffer source
+            "hrsh7th/cmp-path",          -- filesystem path source
+            "rafamadriz/friendly-snippets", -- snippet collection
+            "lukas-reineke/cmp-under-comparator", -- underscores-first comparator
+            "ray-x/cmp-sql",             -- SQL completion source
+            "hrsh7th/cmp-nvim-lsp-signature-help",
         },
-        config = function()
+        opts = function()
             local cmp = require("cmp")
             local luasnip = require("luasnip")
             require("luasnip.loaders.from_vscode").lazy_load() -- load friendly-snippets
-            local lsp_util = require("lspconfig.util")
+            -- (use updated project root logic without lspconfig.util)
             local function get_project_root()
-                return lsp_util.root_pattern(".git", "package.json", "pyproject.toml", "setup.py")(vim.fn.expand("%:p"))
-                    or vim.fn.getcwd()
+                local bufname = vim.api.nvim_buf_get_name(0)
+                local cwd = vim.fn.getcwd()
+                if bufname == "" then
+                    return cwd
+                end
+                local root_files = { "package.json", "pyproject.toml", "setup.py", ".git" }
+                for _, name in ipairs(root_files) do
+                    local match = vim.fs.find(name, {
+                        path = vim.fs.dirname(bufname),
+                        upward = true,
+                        type = (name == ".git") and "directory" or "file",
+                    })[1]
+                    if match then
+                        -- If we found a .git directory, use its parent; otherwise use the file's directory
+                        return (vim.fs.basename(match) == ".git") and vim.fs.dirname(match) or vim.fs.dirname(match)
+                    end
+                end
+                return cwd -- fallback to CWD
             end
             cmp.setup({
                 snippet = {
@@ -778,6 +772,10 @@ return {
                         end
                     end, { "i", "s" }),
                 }),
+                window = {
+                    completion = cmp.config.window.bordered(),
+                    documentation = cmp.config.window.bordered(),
+                },
                 sources = cmp.config.sources({
                     { name = "nvim_lsp" },
                     { name = "luasnip" },
@@ -799,7 +797,7 @@ return {
                     },
                 },
             })
-            -- Setup command-line (:) completion for NeoVim commands.
+            -- Setup command-line (:) completion for Vim commands, using project root for paths
             cmp.setup.cmdline(":", {
                 mapping = cmp.mapping.preset.cmdline(),
                 sources = cmp.config.sources({
@@ -810,11 +808,10 @@ return {
             })
         end,
     },
-
     -- **Treesitter** for syntax highlighting and more
     {
         "nvim-treesitter/nvim-treesitter",
-        version = false,             -- last release is way too old and doesn't work on Windows
+        version = false,       -- last release is way too old and doesn't work on Windows
         build = ":TSUpdate",
         lazy = vim.fn.argc(-1) == 0, -- load treesitter early when opening a file from the cmdline
         init = function(plugin)
@@ -824,7 +821,8 @@ return {
             -- Luckily, the only things that those plugins need are the custom queries, which we make available
             -- during startup.
             require("lazy.core.loader").add_to_rtp(plugin)
-            require("nvim-treesitter.query_predicates")
+            pcall(require, "nvim-treesitter.query_predicates")
+            -- require("nvim-treesitter.query_predicates")
         end,
         cmd = { "TSUpdateSync", "TSUpdate", "TSInstall" },
         keys = {
@@ -1010,7 +1008,7 @@ return {
         },
     },
     -- **Utility Plugins**
-    { "tpope/vim-fugitive",       cmd = { "Git", "Gedit", "Gstatus", "Gdiffsplit", "Gpush", "Gpull" } },
+    { "tpope/vim-fugitive", cmd = { "Git", "Gedit", "Gstatus", "Gdiffsplit", "Gpush", "Gpull" } },
     {
         "lewis6991/gitsigns.nvim",
         event = "BufReadPre", -- Git change signs (replaces vim-gitgutter):contentReference[oaicite:13]{index=13}
