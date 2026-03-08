@@ -656,6 +656,7 @@ return {
                             "htmlhint", -- HTML linter
                             "checkstyle", -- Java linter
                             "cpptools", -- C/C++/Rust debugger
+                            "google-java-format", -- Java formatter
                         },
                         automatic_installation = true,
                         auto_update = true,
@@ -668,8 +669,8 @@ return {
                     require("configs.cornConfig")
                 end,
             },
-            "hrsh7th/cmp-nvim-lsp",            -- LSP source for nvim-cmp
-            "Decodetalkers/csharpls-extended-lsp.nvim", -- Extended C# LSP support
+            "hrsh7th/cmp-nvim-lsp",    -- LSP source for nvim-cmp
+            "Hoffs/csharpls-extended-lsp.nvim", -- Extended C# LSP support
         },
         config = function()
             require("mason-lspconfig").setup({
@@ -922,11 +923,10 @@ return {
             })
         end,
     },
-
     {
-        "mhartington/formatter.nvim",
+        "stevearc/conform.nvim",
         config = function()
-            require("formatterConf")
+            require("configs.formatterConf")
         end,
     },
 
@@ -1018,6 +1018,7 @@ return {
     },
     {
         "numToStr/Comment.nvim",
+        lazy = false,
         keys = { "gc", "gcc", "gbc" },
         config = function()
             require("Comment").setup()
