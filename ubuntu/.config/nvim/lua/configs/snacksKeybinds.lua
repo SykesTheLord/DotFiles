@@ -98,6 +98,13 @@ return {
 	{
 		"<leader>fg",
 		function()
+			Snacks.picker.grep()
+		end,
+		desc = "Grep",
+	},
+	{
+		"<leader>fG",
+		function()
 			Snacks.picker.git_files()
 		end,
 		desc = "Find Git Files",
@@ -315,9 +322,9 @@ return {
 	{
 		"<leader>sp",
 		function()
-			Snacks.picker.lazy()
+			vim.pack.update(nil, { offline = true })
 		end,
-		desc = "Plugin Specs",
+		desc = "Plugins",
 	},
 	{
 		"<leader>sq",

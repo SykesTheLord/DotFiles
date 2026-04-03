@@ -14,6 +14,7 @@ if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Debian" || "$DISTRO" == "Neon" ]]; 
     sudo apt update && sudo apt upgrade -y
     am -u
     sudo flatpak update
+    sudo npm -g update
     print_message "Completed updates"
 
 elif [ -f "/etc/arch-release" ]; then
