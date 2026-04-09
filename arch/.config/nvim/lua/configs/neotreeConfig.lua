@@ -461,3 +461,29 @@ require("neo-tree").setup({
       }
 })
 
+-- Auto-open document_symbols pane on the right for code filetypes
+local ft_list = { "python", "java", "cs", "c", "cpp", "javascript",
+                  "typescript", "sh", "lua", "ps1" }
+local group = vim.api.nvim_create_augroup("NeotreeDocumentSymbols", { clear = true })
+vim.api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
+    group = group,
+    callback = function()
+        local ft = vim.bo.filetype
+        if vim.tbl_contains(ft_list, ft) and not vim.b.neotree_symbols_shown then
+            local cur_win = vim.api.nvim_get_current_win()
+            require("neo-tree.command").execute({
+                source   = "document_symbols",
+                position = "right",
+                toggle   = false,
+                focus    = false,
+            })
+            vim.schedule(function()
+                if type(cur_win) == "number" and vim.api.nvim_win_is_valid(cur_win) then
+                    vim.api.nvim_set_current_win(cur_win)
+                end
+            end)
+            vim.b.neotree_symbols_shown = true
+        end
+    end,
+})
+

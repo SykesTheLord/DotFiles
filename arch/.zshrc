@@ -103,6 +103,8 @@ alias vim="nvim"
 alias updateAll="bash ~/.scripts/updateAll"
 alias batCon='awk "{print *1e-6  W}" /sys/class/power_supply/BAT0/power_now'
 alias tk="tmux kill-server"
+alias mermaidUp='docker run -d --platform linux/amd64 --publish 8000:8080 --name mermaid-live ghcr.io/mermaid-js/mermaid-live-editor'
+alias mermaidDown='docker stop mermaid-live && docker rm mermaid-live'
 
 export PATH=$PATH:~/.dotnet/tools
 export PATH=$PATH:~/UserApps/nuget

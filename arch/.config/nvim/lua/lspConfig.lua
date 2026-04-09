@@ -1,10 +1,4 @@
-local ok_cmp, cmp_nvim_lsp = pcall(require, "cmp_nvim_lsp")
-
--- Capabilities for nvim-cmp
 local capabilities = vim.lsp.protocol.make_client_capabilities()
-if ok_cmp then
-	capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
-end
 
 -- Buffer-local keymaps + format-on-save
 local function on_attach(client, bufnr)
@@ -22,6 +16,9 @@ local function on_attach(client, bufnr)
 	bufmap("n", "]d", vim.diagnostic.goto_next, "Next Diagnostic")
 	bufmap("n", "<leader>e", vim.diagnostic.open_float, "Show Diagnostics")
 	bufmap("n", "<leader>q", vim.diagnostic.setloclist, "Diagnostics to LocList")
+
+	-- Enable built-in LSP completion for this buffer
+	vim.lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
 
 	-- Format on save (if server supports it)
 	if client.server_capabilities and client.server_capabilities.documentFormattingProvider then
@@ -281,7 +278,7 @@ local servers = {
 		local pwsh = (vim.fn.executable("pwsh") == 1 and "pwsh") or "powershell"
 
 		-- Only enable if the start script exists.
-		if vim.loop.fs_stat(start_script) == nil then
+		if vim.uv.fs_stat(start_script) == nil then
 			return nil
 		end
 
@@ -338,34 +335,7 @@ local function configure_servers_native()
 	vim.lsp.enable(enabled)
 end
 
-local function configure_servers_fallback_start()
-	-- Neovim < 0.11 fallback: use FileType autocmds + vim.lsp.start()
-	local group = vim.api.nvim_create_augroup("UserLspStartFallback", { clear = true })
-
-	for name, cfg in pairs(servers) do
-		if cfg and cfg.filetypes and cfg.cmd then
-			vim.api.nvim_create_autocmd("FileType", {
-				group = group,
-				pattern = cfg.filetypes,
-				callback = function(args)
-					local root = calc_root(args.buf, cfg.root_markers or { ".git" })
-					vim.lsp.start(vim.tbl_deep_extend("force", cfg, {
-						name = name,
-						root_dir = root,
-						capabilities = capabilities,
-						on_attach = on_attach,
-					}))
-				end,
-			})
-		end
-	end
-end
-
-if type(vim.lsp.config) == "function" and type(vim.lsp.enable) == "function" then
-	configure_servers_native()
-else
-	configure_servers_fallback_start()
-end
+configure_servers_native()
 
 -- Terraform: convenience autoformat on save (kept from your old config)
 vim.api.nvim_create_autocmd("BufWritePre", {

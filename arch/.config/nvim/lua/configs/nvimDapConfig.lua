@@ -98,13 +98,13 @@ dap.configurations.c = dap.configurations.cpp
 
 
 
--- Optional key mappings for debugging
-vim.api.nvim_set_keymap('n', '<F5>', "<cmd>lua require'dap'.continue()<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<F10>', "<cmd>lua require'dap'.step_over()<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<F11>', "<cmd>lua require'dap'.step_into()<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<F12>', "<cmd>lua require'dap'.step_out()<CR>", { noremap = true, silent = true })
--- vim.api.nvim_set_keymap('n', '<leader>db', "<cmd>lua require'dap'.toggle_breakpoint()<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>dr', "<cmd>lua require'dap'.repl.open()<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>du', "<cmd>lua require'dapui'.toggle()<CR>", { noremap = true, silent = true })
+-- Key mappings for debugging
+local map = vim.keymap.set
+map('n', '<F5>',       function() require('dap').continue() end,    { desc = "DAP Continue" })
+map('n', '<F10>',      function() require('dap').step_over() end,   { desc = "DAP Step Over" })
+map('n', '<F11>',      function() require('dap').step_into() end,   { desc = "DAP Step Into" })
+map('n', '<F12>',      function() require('dap').step_out() end,    { desc = "DAP Step Out" })
+map('n', '<leader>dr', function() require('dap').repl.open() end,   { desc = "DAP REPL" })
+map('n', '<leader>du', function() require('dapui').toggle() end,    { desc = "DAP UI Toggle" })
 
 
