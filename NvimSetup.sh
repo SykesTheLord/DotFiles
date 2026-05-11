@@ -1,6 +1,8 @@
 #!/bin/bash
 
 DISTRO=$(lsb_release -is 2>/dev/null)
+CONFIG_REPO="https://github.com/SykesTheLord/NeoVimConfig"
+CONFIG_DIR="$HOME/.config/nvim"
 
 
 # Function to print messages
@@ -54,7 +56,7 @@ if ! command -v unzip &>/dev/null; then
 fi
 
 if [ -d "$CONFIG_DIR" ]; then
-    echo "Backup existing Neovim configuration to $CONFIG_DIR.bak"
+    echo "Backing up existing Neovim configuration to $CONFIG_DIR.bak"
     mv "$CONFIG_DIR" "$CONFIG_DIR.bak"
 fi
 
@@ -65,7 +67,7 @@ else
     if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Neon" ]]; then
         sudo apt install -y golang-any
 
-    elif [[ "$DISTRO" == "Debian" ]]; then
+    elif [[ "$DISTRO" == "Debian" || "$DISTRO" == "Kali" ]]; then
         sudo apt install -y golang
 
     elif [ -f "/etc/arch-release" ]; then
@@ -87,7 +89,7 @@ else
     if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Neon" ]]; then
         sudo apt install -y fd-find
 
-    elif [[ "$DISTRO" == "Debian" ]]; then
+    elif [[ "$DISTRO" == "Debian" || "$DISTRO" == "Kali" ]]; then
         sudo apt-get install -y fd-find
 
     elif [ -f "/etc/arch-release" ]; then
@@ -103,9 +105,18 @@ else
     fi
 fi
 
-git clone "$CONFIG_REPO" "$CONFIG_DIR"
+NVIM_TMP=$(mktemp -d)
+git clone "$CONFIG_REPO" "$NVIM_TMP/NeoVimConfig"
+bash "$NVIM_TMP/NeoVimConfig/install.sh"
+rm -rf "$NVIM_TMP"
 
 if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Neon" ]]; then
+    sudo apt install -y lua5.1 luarocks
+    sudo apt install -y python3-venv python3-pip
+    luarocks config local_by_default true
+    sudo apt install -y xclip
+
+elif [[ "$DISTRO" == "Kali" ]]; then
     sudo apt install -y lua5.1 luarocks
     sudo apt install -y python3-venv python3-pip
     luarocks config local_by_default true
@@ -182,12 +193,6 @@ if ! command -v tree-sitter &>/dev/null; then
     exit 1
 fi
 
-mkdir ~/Development/.history
-
-# Install plugins
-print_message "Installing plugins"
-nvim
-
-sleep 50
+mkdir -p ~/Development/.history
 
 print_message "Setup complete! You can now start Neovim with 'nvim'."

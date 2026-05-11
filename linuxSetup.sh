@@ -17,8 +17,13 @@ case "$de_choice" in
     * ) INSTALL_DESKTOPENV=false ;;
 esac
 
-git clone https://github.com/SykesTheLord/DotFiles.git ~/.DotFiles
-cd .DotFiles
+if [ -d "$HOME/.DotFiles" ]; then
+    cd "$HOME/.DotFiles"
+    git pull
+else
+    git clone https://github.com/SykesTheLord/DotFiles.git "$HOME/.DotFiles"
+    cd "$HOME/.DotFiles"
+fi
 
 INSTALL_SWAY=false
 
@@ -78,7 +83,24 @@ if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Neon" ]]; then
     sudo apt install -y zsh
     wget https://github.com/fastfetch-cli/fastfetch/releases/download/2.42.0/fastfetch-linux-amd64.deb
     sudo apt install -y ./fastfetch-linux-amd64.deb
+    rm -f fastfetch-linux-amd64.deb
     curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo npm install -g npm@latest
+
+    if [[ "$INSTALL_DESKTOPENV" == true ]]; then
+        sudo apt install -y xorg xinit x11-xserver-utils dbus-x11
+        sudo apt install -y i3 i3status i3lock
+        sudo apt install -y polybar rofi dunst picom feh
+        sudo apt install -y kitty alacritty
+        sudo apt install -y fonts-firacode fonts-jetbrains-mono
+        sudo apt install -y dolphin ark okular
+        sudo apt install -y okular-extra-backends p7zip-full unrar kio-extras ffmpegthumbs
+        sudo apt install -y python3-pip python3-xcbgen
+        sudo pip3 install -U pywal
+        sudo apt install -y xrdp
+        sudo sed -i 's#^test -x /etc/X11/Xsession && exec /etc/X11/Xsession#exec i3#' /etc/xrdp/startwm.sh
+        sudo systemctl restart xrdp
+    fi
+
     if [ "$INSTALL_SWAY" = true ]; then
         # 1) Ensure SwayWM
         if ! command -v sway &> /dev/null; then
@@ -124,6 +146,111 @@ if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Neon" ]]; then
             done
 
             # 3) Clone & build QtGreet
+            echo "→ Building QtGreet"
+            [ -d /tmp/QtGreet ] || git clone https://gitlab.com/marcusbritanicus/QtGreet.git /tmp/QtGreet
+            cd /tmp/QtGreet
+            meson setup build --prefix=/usr --buildtype=release -Dbuild_greetwl=false \
+                || { echo "ERROR: meson setup failed for QtGreet" >&2; exit 1; }
+            ninja -C build && sudo ninja -C build install \
+                || { echo "ERROR: building/installing QtGreet failed" >&2; exit 1; }
+            cd ~
+            echo "→ QtGreet built & installed from source."
+        else
+            echo "QtGreet already installed."
+        fi
+    fi
+
+elif [[ "$DISTRO" == "Kali" ]]; then
+    # Kali Linux setup (Debian-based, uses Debian Docker/PowerShell repos)
+    print_message "Setting up for Kali Linux"
+    sudo apt update && sudo apt upgrade -y
+    sudo apt-get install -y wget apt-transport-https software-properties-common
+    sudo apt-get update
+    sudo apt-get install -y ca-certificates curl
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+    sudo chmod a+r /etc/apt/keyrings/docker.asc
+    # Kali is based on Debian bookworm; pin to bookworm for Docker repo compatibility
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bookworm stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt-get update
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    # PowerShell: use Microsoft's Debian 12 repo (closest match for Kali rolling)
+    wget -q https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb
+    sudo dpkg -i packages-microsoft-prod.deb
+    rm packages-microsoft-prod.deb
+    sudo apt-get update
+    sudo apt-get install -y powershell
+    sudo apt update && sudo apt upgrade -y
+    sudo apt-get install -y clangd
+    sudo apt-get install -y dotnet-sdk-8.0
+    sudo apt install -y default-jre npm
+    sudo apt install -y ripgrep
+    sudo apt install -y direnv
+    sudo apt install -y tmux
+    sudo apt install -y fzf
+    sudo apt install -y zsh
+    wget https://github.com/fastfetch-cli/fastfetch/releases/download/2.42.0/fastfetch-linux-amd64.deb
+    sudo apt install -y ./fastfetch-linux-amd64.deb
+    rm -f fastfetch-linux-amd64.deb
+    curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo npm install -g npm@latest
+
+    if [[ "$INSTALL_DESKTOPENV" == true ]]; then
+        sudo apt install -y xorg xinit x11-xserver-utils dbus-x11
+        sudo apt install -y i3 i3status i3lock
+        sudo apt install -y polybar rofi dunst picom feh
+        sudo apt install -y kitty alacritty
+        sudo apt install -y fonts-firacode fonts-jetbrains-mono
+        sudo apt install -y dolphin ark okular
+        sudo apt install -y okular-extra-backends p7zip-full unrar kio-extras ffmpegthumbs
+        sudo apt install -y python3-pip python3-xcbgen
+        sudo pip3 install -U pywal
+        sudo apt install -y xrdp
+        sudo sed -i 's#^test -x /etc/X11/Xsession && exec /etc/X11/Xsession#exec i3#' /etc/xrdp/startwm.sh
+        sudo systemctl restart xrdp
+    fi
+
+    if [ "$INSTALL_SWAY" = true ]; then
+        # 1) Ensure SwayWM
+        if ! command -v sway &> /dev/null; then
+            echo "Installing SwayWM on Kali…"
+            sudo apt-get update
+            sudo apt-get install -y sway \
+                || { echo "ERROR: could not install sway" >&2; exit 1; }
+        else
+            echo "SwayWM already installed."
+        fi
+
+        # 2) Ensure QtGreet
+        if ! command -v qtgreet &> /dev/null; then
+            echo "QtGreet not found, building from source (including dependencies)…"
+
+            sudo apt-get update
+            sudo apt-get install -y \
+                git build-essential meson ninja-build pkg-config \
+                qt6-base-dev qt6-base-private-dev qt6-declarative-dev \
+                qt6-wayland-dev qt6-wayland-dev-tools \
+                libwayland-dev libx11-dev libxcb1-dev libxkbcommon-dev \
+                libpam0g-dev \
+                || { echo "ERROR: could not install build deps" >&2; exit 1; }
+
+            DEPS=(
+                "https://gitlab.com/desktop-frameworks/wayqt.git"
+                "https://gitlab.com/desktop-frameworks/applications.git"
+                "https://gitlab.com/desktop-frameworks/ipc.git"
+                "https://gitlab.com/desktop-frameworks/utils.git"
+                "https://gitlab.com/desktop-frameworks/login1.git"
+            )
+            for repo in "${DEPS[@]}"; do
+                name=$(basename -s .git "$repo")
+                echo "→ Building dependency: $name"
+                [ -d "/tmp/$name" ] || git clone "$repo" "/tmp/$name"
+                cd "/tmp/$name"
+                meson setup build --prefix=/usr --buildtype=release \
+                    || { echo "ERROR: meson setup failed for $name" >&2; exit 1; }
+                ninja -C build && sudo ninja -C build install \
+                    || { echo "ERROR: building/installing $name failed" >&2; exit 1; }
+            done
+
             echo "→ Building QtGreet"
             [ -d /tmp/QtGreet ] || git clone https://gitlab.com/marcusbritanicus/QtGreet.git /tmp/QtGreet
             cd /tmp/QtGreet
@@ -534,7 +661,7 @@ sudo usermod -aG docker $USER
 # Terraform installation
 if [ -f "/etc/arch-release" ]; then
     sudo pacman -S --noconfirm terraform
-elif [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Debian" || "$DISTRO" == "Neon" ]]; then
+elif [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Debian" || "$DISTRO" == "Neon" || "$DISTRO" == "Kali" ]]; then
     wget -O go0.24.0.linux-amd64.tar.gz https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
     sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go0.24.0.linux-amd64.tar.gz
     export PATH=$PATH:/usr/local/go/bin
@@ -557,7 +684,7 @@ if [[ $(grep -i Microsoft /proc/version) ]]; then
     wget https://github.com/equalsraf/win32yank/releases/download/v0.1.1/win32yank-x64.zip
     unzip win32yank-x64.zip -d ~/UserApps/win32yank
     chmod +x ~/UserApps/win32yank/win32yank.exe
-    if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Debian" ]]; then
+    if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Debian" || "$DISTRO" == "Kali" ]]; then
         wget -q "https://raw.githubusercontent.com/ivan-hc/AM/main/INSTALL" -O INSTALL-AM.sh && chmod a+x INSTALL-AM.sh
         sudo ./INSTALL-AM.sh
     fi
@@ -622,7 +749,7 @@ if [ "$INSTALL_DESKTOPENV" = true ]; then
 fi
 
 cd ~/.DotFiles
-python3 installDotfiles.py
+bash installDotfiles.sh
 cd
 
 echo "Create and setup ssh keys for github." >> toDo.txt
