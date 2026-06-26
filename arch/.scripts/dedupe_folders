@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# dedupe_folders.sh
+#
+# Finds folders whose name matches their parent folder's name, moves all
+# contents one level up, then removes the now-empty duplicate folder.
+#
+# Usage:
+#   ./dedupe_folders.sh [ROOT_DIR]
+#
+# ROOT_DIR defaults to the current working directory if not supplied.
+#
+# Options (set at the top of the file):
+#   DRY_RUN=true   — print what would happen without making any changes
+
+set -euo pipefail
+
+# ── Config ────────────────────────────────────────────────────────────────────
+DRY_RUN=false          # set to true to preview changes without touching files
+ROOT_DIR="${1:-.}"     # directory to scan; defaults to CWD
+# ─────────────────────────────────────────────────────────────────────────────
+
+ROOT_DIR="$(realpath "$ROOT_DIR")"
+
+if [[ ! -d "$ROOT_DIR" ]]; then
+    echo "Error: '$ROOT_DIR' is not a directory." >&2
+    exit 1
+fi
+
+run() {
+    # Wrapper that respects DRY_RUN
+    if [[ "$DRY_RUN" == true ]]; then
+        echo "[dry-run] $*"
+    else
+        "$@"
+    fi
+}
+
+found=0
+
+# Use process substitution so the while loop runs in the current shell and can
+# update the `found` counter.  Sort by depth (deepest first) so that nested
+# duplicates are resolved bottom-up before their ancestors are evaluated.
+while IFS= read -r -d '' dir; do
+    dir_name="$(basename "$dir")"
+    parent_dir="$(dirname "$dir")"
+    parent_name="$(basename "$parent_dir")"
+
+    # Skip if this folder's name does NOT match its parent's name
+    [[ "$dir_name" == "$parent_name" ]] || continue
+
+    echo "Match: '$dir'  (parent: '$parent_dir')"
+    found=$(( found + 1 ))
+
+    # Move every item inside the duplicate folder up one level.
+    # `find -maxdepth 1 -mindepth 1` lists direct children only.
+    while IFS= read -r -d '' item; do
+        dest="$parent_dir/$(basename "$item")"
+
+        if [[ -e "$dest" || -L "$dest" ]]; then
+            echo "  Warning: '$dest' already exists — skipping '$(basename "$item")'" >&2
+            continue
+        fi
+
+        run mv -- "$item" "$parent_dir/"
+        echo "  Moved: '$(basename "$item")'"
+    done < <(find "$dir" -maxdepth 1 -mindepth 1 -print0)
+
+    # Remove the folder if it is now empty (or would be in dry-run).
+    if [[ "$DRY_RUN" == true ]]; then
+        echo "[dry-run] rmdir '$dir'"
+    else
+        if rmdir "$dir" 2>/dev/null; then
+            echo "  Removed empty folder: '$dir'"
+        else
+            echo "  Warning: '$dir' is not empty after moving — left in place." >&2
+        fi
+    fi
+
+    echo "  Waiting 2 seconds..."
+    sleep 2
+
+    done < <(
+    find "$ROOT_DIR" -mindepth 2 -type d -print0 \
+        | sort -z -t/ -k1 | tr '\0' '\n' \
+        | awk '{ print length, $0 }' | sort -rn | cut -d' ' -f2- \
+        | tr '\n' '\0'
+)
+
+if (( found == 0 )); then
+    echo "No duplicate-named folders found under '$ROOT_DIR'."
+else
+    echo ""
+    echo "Done. $found duplicate-named folder(s) processed."
+fi

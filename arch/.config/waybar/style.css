@@ -101,6 +101,64 @@ window#waybar {
   box-shadow: none;
 }
 
+#workspaces-custom {
+  background: transparent;
+}
+
+#custom-ws-1,
+#custom-ws-2,
+#custom-ws-3,
+#custom-ws-4,
+#custom-ws-5,
+#custom-ws-6 {
+  background: transparent;
+  color: #c0caf5;
+  padding: 0;
+  margin: 2px;
+  min-width: 16px;
+  min-height: 16px;
+  border-radius: 15px;
+}
+
+#custom-ws-1.active,
+#custom-ws-2.active,
+#custom-ws-3.active,
+#custom-ws-4.active,
+#custom-ws-5.active,
+#custom-ws-6.active {
+  background: #13131d;
+}
+
+#custom-ws-1.focused,
+#custom-ws-2.focused,
+#custom-ws-3.focused,
+#custom-ws-4.focused,
+#custom-ws-5.focused,
+#custom-ws-6.focused {
+  background: #88c0d0;
+  color: #191d24;
+  font-weight: bold;
+}
+
+#custom-ws-1:hover,
+#custom-ws-2:hover,
+#custom-ws-3:hover,
+#custom-ws-4:hover,
+#custom-ws-5:hover,
+#custom-ws-6:hover {
+  background: #434c5e;
+  color: #cdd6f4;
+}
+
+#custom-ws-1.empty,
+#custom-ws-2.empty,
+#custom-ws-3.empty,
+#custom-ws-4.empty,
+#custom-ws-5.empty,
+#custom-ws-6.empty {
+  color: #6b7280;
+}
+
 #window {
   padding: 2 5px;
 }

@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+# jellyfin-cleanup.sh
+# Removes files that are not media or Jellyfin metadata, then prunes empty directories.
+# Usage: jellyfin-cleanup.sh [--dry-run] <target-directory>
+
+set -euo pipefail
+
+# ── Colour helpers ─────────────────────────────────────────────────────────────
+RED='\033[0;31m'; YELLOW='\033[1;33m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'; NC='\033[0m'
+info()    { echo -e "${CYAN}[INFO]${NC}  $*"; }
+warn()    { echo -e "${YELLOW}[WARN]${NC}  $*"; }
+deleted() { echo -e "${RED}[DEL]${NC}   $*"; }
+ok()      { echo -e "${GREEN}[OK]${NC}    $*"; }
+
+# ── Argument parsing ───────────────────────────────────────────────────────────
+DRY_RUN=false
+TARGET_DIR=""
+
+usage() {
+    echo "Usage: $(basename "$0") [--dry-run] <target-directory>"
+    echo ""
+    echo "  --dry-run   Print what would be deleted without actually deleting."
+    echo ""
+    echo "Kept extensions (case-insensitive):"
+    echo "  Video     : mkv mp4 avi mov wmv flv webm m4v ts m2ts mpg mpeg ogv 3gp divx vob"
+    echo "  Audio     : mp3 flac aac ogg wav wma m4a opus aiff alac"
+    echo "  Subtitles : srt ass ssa sub idx vtt sup pgs"
+    echo "  Images    : jpg jpeg png gif webp tbn"
+    echo "  Metadata  : nfo xml"
+    echo "  Playlists : m3u m3u8 strm"
+    exit 1
+}
+
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run) DRY_RUN=true ;;
+        --help|-h) usage ;;
+        *)
+            if [[ -z "$TARGET_DIR" ]]; then
+                TARGET_DIR="$arg"
+            else
+                echo "Unexpected argument: $arg" >&2
+                usage
+            fi
+            ;;
+    esac
+done
+
+[[ -z "$TARGET_DIR" ]] && { echo "Error: no target directory specified." >&2; usage; }
+[[ -d "$TARGET_DIR" ]] || { echo "Error: '$TARGET_DIR' is not a directory." >&2; exit 1; }
+
+TARGET_DIR="$(realpath "$TARGET_DIR")"
+
+# ── Allowed extensions ─────────────────────────────────────────────────────────
+# Edit these arrays to customise what is kept.
+ALLOWED_EXTENSIONS=(
+    # Video
+    mkv mp4 avi mov wmv flv webm m4v ts m2ts mpg mpeg ogv 3gp divx vob
+    # Audio
+    mp3 flac aac ogg wav wma m4a opus aiff alac
+    # Subtitles
+    srt ass ssa sub idx vtt sup pgs
+    # Images / artwork  (poster, fanart, banner, thumb, etc.)
+    jpg jpeg png gif webp tbn
+    # Metadata / NFO
+    nfo xml
+    # Playlists / stream links
+    m3u m3u8 strm
+)
+
+# Build a regex like (mkv|mp4|avi|…)  — all lowercase for case-insensitive match
+EXT_PATTERN="$(IFS='|'; echo "${ALLOWED_EXTENSIONS[*]}")"
+
+# ── Counters ───────────────────────────────────────────────────────────────────
+files_deleted=0
+files_skipped=0
+dirs_removed=0
+
+# ── Phase 1: remove unwanted files ────────────────────────────────────────────
+info "Scanning: $TARGET_DIR"
+$DRY_RUN && warn "DRY-RUN mode — nothing will actually be deleted."
+echo ""
+
+while IFS= read -r -d '' file; do
+    # Get lowercase extension (strip leading dot)
+    ext="${file##*.}"
+    ext_lower="${ext,,}"
+
+    # Always keep files named exactly ".ignore"
+    if [[ "$(basename "$file")" == ".ignore" ]]; then
+        files_skipped=$(( files_skipped + 1 ))
+        continue
+    fi
+
+    if [[ "$ext_lower" =~ ^($EXT_PATTERN)$ ]]; then
+        files_skipped=$(( files_skipped + 1 ))
+        continue
+    fi
+
+    if $DRY_RUN; then
+        deleted "(dry-run) $file"
+    else
+        rm -f -- "$file"
+        deleted "$file"
+    fi
+    files_deleted=$(( files_deleted + 1 ))
+
+done < <(find "$TARGET_DIR" -type f -print0)
+
+# ── Phase 2: remove empty directories (deepest first) ─────────────────────────
+echo ""
+info "Pruning empty directories..."
+
+while IFS= read -r -d '' dir; do
+    # Never remove the root target directory itself
+    [[ "$dir" == "$TARGET_DIR" ]] && continue
+
+    if $DRY_RUN; then
+        # In dry-run, list every directory — after all unwanted files are gone
+        # most dirs will be empty and eligible for removal.
+        deleted "(dry-run) [dir] $dir"
+        dirs_removed=$(( dirs_removed + 1 ))
+    else
+        # rmdir only succeeds if the directory is actually empty
+        if rmdir -- "$dir" 2>/dev/null; then
+            deleted "[dir] $dir"
+            dirs_removed=$(( dirs_removed + 1 ))
+        fi
+    fi
+done < <(find "$TARGET_DIR" -mindepth 1 -depth -type d -print0)
+
+# ── Summary ────────────────────────────────────────────────────────────────────
+echo ""
+ok "Done."
+echo "  Files kept    : $files_skipped"
+echo "  Files removed : $files_deleted"
+echo "  Dirs  removed : $dirs_removed"
+$DRY_RUN && warn "Re-run without --dry-run to apply changes."

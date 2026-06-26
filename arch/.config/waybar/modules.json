@@ -32,8 +32,20 @@
       "4": [],
       "5": [],
       "6": []
-    },
-    "move-to-monitor": true
+    }
+    // move-to-monitor removed: broken under Hyprland Lua dispatch (waybar emits
+    // hl.dsp.focus with monitor="current", which the focus dispatcher ignores).
+    // The custom/ws-* modules below replace this behavior via scripts/ws-click.sh.
+  },
+  "custom/ws-1": { "exec": "~/.config/waybar/scripts/ws-status.sh 1", "return-type": "json", "format": "{}", "signal": 1, "on-click": "~/.config/waybar/scripts/ws-click.sh 1" },
+  "custom/ws-2": { "exec": "~/.config/waybar/scripts/ws-status.sh 2", "return-type": "json", "format": "{}", "signal": 1, "on-click": "~/.config/waybar/scripts/ws-click.sh 2" },
+  "custom/ws-3": { "exec": "~/.config/waybar/scripts/ws-status.sh 3", "return-type": "json", "format": "{}", "signal": 1, "on-click": "~/.config/waybar/scripts/ws-click.sh 3" },
+  "custom/ws-4": { "exec": "~/.config/waybar/scripts/ws-status.sh 4", "return-type": "json", "format": "{}", "signal": 1, "on-click": "~/.config/waybar/scripts/ws-click.sh 4" },
+  "custom/ws-5": { "exec": "~/.config/waybar/scripts/ws-status.sh 5", "return-type": "json", "format": "{}", "signal": 1, "on-click": "~/.config/waybar/scripts/ws-click.sh 5" },
+  "custom/ws-6": { "exec": "~/.config/waybar/scripts/ws-status.sh 6", "return-type": "json", "format": "{}", "signal": 1, "on-click": "~/.config/waybar/scripts/ws-click.sh 6" },
+  "group/workspaces-custom": {
+    "orientation": "horizontal",
+    "modules": ["custom/ws-1", "custom/ws-2", "custom/ws-3", "custom/ws-4", "custom/ws-5", "custom/ws-6"]
   },
   "idle_inhibitor": {
     "format": "{icon}",

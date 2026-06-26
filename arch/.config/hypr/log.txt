@@ -1,0 +1,9 @@
+claude --resume 55c67c1f-1f5d-430b-ad3b-2ce8743a1d95
+Then log out of Hyprland and log back in (not hyprctl reload — Hyprland picks conf-vs-lua only at startup). If something breaks and you can't get into a graphical session, switch to a TTY (Ctrl+Alt+F2), log in, and run:
+
+  cd ~/.config/hypr
+  mv hyprland.lua hyprland.lua.staging
+  mv hyprland.conf.bak hyprland.conf
+  for f in components/*.conf.bak; do mv "$f" "${f%.bak}"; done
+
+  Then log back into Hyprland.

@@ -1,0 +1,29 @@
+#############################
+### ENVIRONMENT VARIABLES ###
+#############################
+
+# See https://wiki.hyprland.org/Configuring/Environment-variables/
+
+env = XCURSOR_SIZE,24
+env = XCURSOR_THEME,Nordzy-cursors-white
+env = HYPRCURSOR_SIZE,24
+env = HYPRCURSOR_THEME,Nordzy-hyprcursors-white
+env = QT_QPA_PLATFORMTHEME,qt5ct
+
+# Force all apps to use Wayland
+env = GDK_BACKEND,wayland,x11,*
+env = QT_QPA_PLATFORM,wayland;xcb
+env = QT_STYLE_OVERRIDE,kvantum
+env = SDL_VIDEODRIVER,wayland
+env = MOZ_ENABLE_WAYLAND,1
+env = ELECTRON_OZONE_PLATFORM_HINT,wayland
+env = OZONE_PLATFORM,wayland
+env = TERMINAL,alacritty
+
+
+env = XDG_MENU_PREFIX,plasma-
+#    env = AQ_DRM_DEVICES,/dev/dri/card1
+#    env = LIBVA_DRIVER_NAME,nvidia
+#    env = GBM_BACKEND,nvidia-drm
+#    env = __GLX_VENDOR_LIBRARY_NAME,nvidia
+

@@ -9,7 +9,7 @@
     // Choose the order of the modules
     "modules-left": [
         "custom/arch",
-        "hyprland/workspaces"
+        "group/workspaces-custom"
     ],
     "modules-center": [
         "hyprland/window"
