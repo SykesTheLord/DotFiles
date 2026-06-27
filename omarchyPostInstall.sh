@@ -3,17 +3,25 @@
 # Post-install customizations layered on top of a fresh omarchy install.
 # Run as your normal user (sudo is invoked internally where needed).
 #
-# Usage: bash omarchyPostInstall.sh [--dry-run]
+# Usage: bash omarchyPostInstall.sh [--dry-run] [--restore-home <path>]
+#
+# --restore-home <path>
+#   Rsync a previous home directory into $HOME before deploying new configs.
+#   Skips all files managed by omarchy or this script so the fresh setup wins.
 
 set -euo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DRY_RUN=false
+RESTORE_HOME=""
 
-for arg in "$@"; do
-    case "$arg" in
-        --dry-run) DRY_RUN=true ;;
-        *) echo "Unknown argument: $arg"; exit 1 ;;
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --dry-run) DRY_RUN=true; shift ;;
+        --restore-home)
+            [[ -n "${2:-}" ]] || { echo "Error: --restore-home requires a path"; exit 1; }
+            RESTORE_HOME="$2"; shift 2 ;;
+        *) echo "Unknown argument: $1"; exit 1 ;;
     esac
 done
 
@@ -44,6 +52,66 @@ if [[ ! -d "$HOME/.local/share/omarchy" ]]; then
 fi
 
 log "Starting omarchy post-install (dry_run=$DRY_RUN)"
+
+# ── 0. restore previous home directory ───────────────────────────────────────
+
+# Files/dirs managed by omarchy or this script — excluded from the restore so
+# the fresh setup always wins.  The list covers omarchy's deployed app configs,
+# its runtime state dirs, and every path this script writes to.
+MANAGED_EXCLUDES=(
+    # omarchy installation & runtime state
+    ".local/share/omarchy/"
+    ".local/state/omarchy/"
+    ".config/omarchy/"
+    # omarchy-managed hyprland entry point (user customisation files are kept)
+    ".config/hypr/hyprland.conf"
+    # configs managed by this script
+    ".config/hypr/hypridle.conf"
+    ".config/hypr/windowrules.conf"
+    # omarchy terminal & UI app configs (regenerated from theme on first launch)
+    ".config/alacritty/"
+    ".config/waybar/"
+    ".config/mako/"
+    ".config/btop/"
+    ".config/fastfetch/"
+    ".config/walker/"
+    ".config/swayosd/"
+    ".config/foot/"
+    # shell configs managed by omarchy/this script
+    ".bashrc"
+    ".zshrc"
+    ".oh-my-zsh/"
+    # helper script deployed by this install
+    ".scripts/omarchy-zsh-colors-set"
+)
+
+restore_home() {
+    local src="${RESTORE_HOME%/}/"   # ensure trailing slash for rsync
+
+    if [[ ! -d "$src" ]]; then
+        echo "Error: --restore-home path does not exist: $src"
+        exit 1
+    fi
+
+    log "Restoring previous home from: $src"
+    log "The following paths are excluded (managed by omarchy / this script):"
+    for p in "${MANAGED_EXCLUDES[@]}"; do
+        echo "    $p"
+    done
+
+    # Build rsync --exclude args
+    local rsync_args=(-av --no-group --progress)
+    for p in "${MANAGED_EXCLUDES[@]}"; do
+        rsync_args+=(--exclude="$p")
+    done
+
+    run rsync "${rsync_args[@]}" "$src" "$HOME/"
+    log "Home restore complete"
+}
+
+if [[ -n "$RESTORE_HOME" ]]; then
+    restore_home
+fi
 
 # ── 1. yay ────────────────────────────────────────────────────────────────────
 
