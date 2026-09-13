@@ -2,7 +2,9 @@
 # archWslSetup.sh
 # Set up Arch Linux on WSL with the terminal tooling from the main Omarchy
 # machine (zsh + oh-my-zsh, Neovim, tmux/herdr, lazygit/lazydocker, btop, mise,
-# languages), themed with Omarchy's "hackerman" palette.
+# languages), themed with Omarchy's "hackerman" palette, plus development
+# toolchains for C/C++, C#/.NET, Java, Python and Bash: compilers, debuggers,
+# build tools, and the Mason LSP/DAP/formatter/linter packages NeoVimConfig uses.
 #
 # Stage 1, as root on a fresh image (clone this repo somewhere world-readable,
 # e.g. /opt/DotFiles, or re-clone it as the new user for stage 2):
@@ -14,7 +16,7 @@
 #   bash archWslSetup.sh [--dry-run] [--skip-nvim] [--skip-terminal]
 #
 #   --dry-run        Print what would happen without changing anything
-#   --skip-nvim      Don't install SykesTheLord/NeoVimConfig
+#   --skip-nvim      Don't install NeoVimConfig, hackerman.nvim or Mason packages
 #   --skip-terminal  Don't add the Hackerman scheme to Windows Terminal
 
 set -euo pipefail
@@ -57,13 +59,22 @@ PACMAN_PACKAGES=(
     expac pacman-contrib usage mise
     # containers & infra
     docker docker-compose docker-buildx terraform
-    # languages & build tooling
-    go rust clang llvm libc++ cmake ninja valgrind
-    lua51 luarocks tree-sitter-cli
-    python python-pip python-pipx
-    ruby libyaml postgresql-libs mariadb-libs
-    jdk11-openjdk jdk17-openjdk jdk21-openjdk jdk25-openjdk maven
-    dotnet-sdk dotnet-sdk-8.0 dotnet-sdk-9.0
+    # C / C++ (clang ships clangd and clang-tidy; gdb backs the cpptools debugger)
+    gcc make pkgconf clang llvm libc++ lldb gdb cmake ninja meson bear ccache
+    gtest valgrind cppcheck strace ltrace
+    # C# / .NET: SDKs 10, 9, 8 and matching ASP.NET Core runtimes
+    dotnet-sdk dotnet-sdk-9.0 dotnet-sdk-8.0
+    aspnet-runtime aspnet-runtime-9.0 aspnet-runtime-8.0
+    # Java
+    jdk11-openjdk jdk17-openjdk jdk21-openjdk jdk25-openjdk maven gradle
+    # Python (NeoVimConfig's DAP runs `python -m debugpy.adapter` on the system python)
+    python python-pip python-pipx uv ruff python-pytest ipython python-debugpy
+    # Bash
+    shellcheck shfmt bats
+    # prerequisites for Mason's npm-, pip- and luarocks-based packages
+    nodejs npm lua51 luarocks tree-sitter-cli
+    # other languages
+    go rust ruby libyaml postgresql-libs mariadb-libs
     # network / security
     nmap tcpdump bind whois openbsd-netcat socat inetutils
     # misc
@@ -78,6 +89,25 @@ AUR_PACKAGES=(
     cliamp
     downgrade
     wslu        # wslview: open URLs/files with Windows defaults
+)
+
+# Global .NET tools (~/.dotnet/tools)
+DOTNET_TOOLS=(
+    dotnet-ef   # Entity Framework Core CLI
+    csharpier   # C# formatter, same one conform.nvim runs
+)
+
+# jdtls needs Java 21+; matches the desktop's default
+JAVA_DEFAULT="java-25-openjdk"
+
+# Mason packages NeoVimConfig uses for C/C++, C#, Java, Python and Bash (LSP, DAP,
+# formatters, linters). Installed during setup so the first nvim launch works.
+MASON_PACKAGES=(
+    clangd clang-format cpptools cpplint cmake-language-server cmakelang cmakelint
+    csharp-language-server@0.16.0 netcoredbg csharpier   # csharp-ls pinned like NeoVimConfig's mason.lua
+    jdtls java-debug-adapter google-java-format checkstyle
+    jedi-language-server black pylint debugpy
+    bash-language-server shellcheck beautysh
 )
 
 # Must match arch-wsl/.oh-my-zsh/custom/themes/sykes_hackerman.zsh-theme and
@@ -284,7 +314,7 @@ install_nvim_config() {
 
     # install.sh symlinks the clone to ~/.config/nvim, so the clone has to stay put.
     if [[ "$(readlink -f "$HOME/.config/nvim" 2>/dev/null)" == "$NVIM_CONFIG_DIR" ]]; then
-        log "~/.config/nvim already links to the clone; refreshing plugins"
+        log "$HOME/.config/nvim already links to the clone; refreshing plugins"
         run nvim --headless +"qall!"
     else
         run bash "$NVIM_CONFIG_DIR/install.sh" --yes --force
@@ -326,6 +356,92 @@ if ok and lualine.get_config then
     lualine.setup(cfg)
 end
 EOF
+}
+
+configure_java() {
+    if ! $DRY_RUN && [[ "$(archlinux-java get 2>/dev/null)" == "$JAVA_DEFAULT" ]]; then
+        log "$JAVA_DEFAULT is already the default Java"
+        return
+    fi
+    log "Setting the default Java to $JAVA_DEFAULT"
+    run sudo archlinux-java set "$JAVA_DEFAULT"
+}
+
+install_dotnet_tools() {
+    log "Installing global .NET tools"
+    export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
+    local installed="" tool
+    if command -v dotnet &>/dev/null; then
+        installed=$(dotnet tool list --global 2>/dev/null | awk 'NR > 2 { print $1 }')
+    fi
+    for tool in "${DOTNET_TOOLS[@]}"; do
+        if grep -qx "$tool" <<< "$installed"; then
+            log "$tool already installed"
+        else
+            run dotnet tool install --global "$tool"
+        fi
+    done
+}
+
+install_mason_packages() {
+    local mason="$HOME/.local/share/nvim/mason/packages" pkg
+    local missing=()
+    for pkg in "${MASON_PACKAGES[@]}"; do
+        [[ -d "$mason/${pkg%@*}" ]] || missing+=("$pkg")
+    done
+    if (( ${#missing[@]} == 0 )); then
+        log "Mason packages already installed"
+        return
+    fi
+
+    log "Installing Mason packages: ${missing[*]}"
+    if $DRY_RUN; then
+        echo "  [dry-run] nvim --headless: install and wait for ${missing[*]}"
+        return
+    fi
+
+    # NeoVimConfig starts some installs asynchronously at startup and :MasonInstall
+    # doesn't wait for installs already in progress, so start whatever isn't running
+    # and wait until none of the wanted packages are still installing.
+    local script
+    script=$(mktemp --suffix=.lua)
+    cat > "$script" << 'EOF'
+local registry = require("mason-registry")
+local specs = vim.split(vim.env.MASON_WANTED or "", " ", { trimempty = true })
+local function get(spec)
+    local ok, pkg = pcall(registry.get_package, (spec:gsub("@.*$", "")))
+    return ok and pkg or nil
+end
+
+local refreshed = false
+registry.refresh(function() refreshed = true end)
+vim.wait(300000, function() return refreshed end, 200)
+
+for _, spec in ipairs(specs) do
+    local pkg = get(spec)
+    if pkg and not pkg:is_installed() and not pkg:is_installing() then
+        pkg:install({ version = spec:match("@(.+)$") })
+    end
+end
+
+vim.wait(3600000, function()
+    for _, spec in ipairs(specs) do
+        local pkg = get(spec)
+        if pkg and pkg:is_installing() then return false end
+    end
+    return true
+end, 1000)
+EOF
+    MASON_WANTED="${missing[*]}" nvim --headless -c "luafile $script" -c "qall" || true
+    rm -f "$script"
+
+    local failed=()
+    for pkg in "${missing[@]}"; do
+        [[ -d "$mason/${pkg%@*}" ]] || failed+=("$pkg")
+    done
+    if (( ${#failed[@]} > 0 )); then
+        warn "Mason packages that didn't install: ${failed[*]} (retry inside nvim with :Mason)"
+    fi
 }
 
 setup_docker() {
@@ -441,10 +557,14 @@ user_stage() {
     install_oh_my_zsh
     deploy_dotfiles
     install_mise_tools
+    install_dotnet_tools
     if ! $SKIP_NVIM; then
         install_nvim_config
         install_nvim_theme
     fi
+    # After NeoVimConfig's install.sh, which pulls in a newer headless JRE
+    configure_java
+    $SKIP_NVIM || install_mason_packages
     setup_docker
     set_login_shell
     $SKIP_TERMINAL || configure_windows_terminal

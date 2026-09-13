@@ -100,7 +100,19 @@ bash archWslSetup.sh --user <name>
 bash archWslSetup.sh [--dry-run] [--skip-nvim] [--skip-terminal]
 ```
 
-**What it installs:** zsh + oh-my-zsh, Neovim, tmux, herdr, lazygit, lazydocker, btop, fastfetch, fzf/ripgrep/fd/bat/eza/zoxide, gum, direnv, mise (node, Claude Code, Codex, Playwright), Docker, Terraform, Go, Rust, clang/cmake, Python, Ruby, JDK 11/17/21/25, .NET 8/9/10, network tools (nmap, tcpdump, dig, socat), `wslu` and `wl-clipboard`. yay is built from the AUR (`yay-bin`), and herdr/cliamp come from the AUR because Omarchy's package repo isn't available.
+**What it installs:** zsh + oh-my-zsh, Neovim, tmux, herdr, lazygit, lazydocker, btop, fastfetch, fzf/ripgrep/fd/bat/eza/zoxide, gum, direnv, mise (node, Claude Code, Codex, Playwright), Docker, Terraform, Go, Rust, Ruby, network tools (nmap, tcpdump, dig, socat), `wslu` and `wl-clipboard`, plus the development toolchains below. yay is built from the AUR (`yay-bin`), and herdr/cliamp come from the AUR because Omarchy's package repo isn't available.
+
+**Development tooling:**
+
+| Language | System | Neovim (Mason) |
+|---|---|---|
+| C / C++ | gcc, clang (clangd, clang-tidy), gdb, lldb, cmake, ninja, meson, bear, ccache, gtest, valgrind, cppcheck, strace/ltrace | clangd, clang-format, cpptools, cpplint, cmake-language-server, cmakelang, cmakelint |
+| C# / .NET | .NET SDK 10/9/8, ASP.NET Core runtimes 10/9/8, global tools `dotnet-ef` and `csharpier` | csharp-language-server 0.16.0, netcoredbg, csharpier |
+| Java | JDK 11/17/21/25 (default 25 via `archlinux-java`), Maven, Gradle | jdtls, java-debug-adapter, google-java-format, checkstyle |
+| Python | python, pip, pipx, uv, ruff, pytest, ipython, debugpy | jedi-language-server, black, pylint, debugpy |
+| Bash | shellcheck, shfmt, bats | bash-language-server, shellcheck, beautysh |
+
+The Mason packages are installed by a headless Neovim that waits for them to finish, so LSP, debugging and formatting work on the first launch. `.zshrc` sets `JAVA_HOME`, `DOTNET_ROOT`, .NET telemetry opt-out, and CMake defaults (Ninja generator, `compile_commands.json` for clangd).
 
 **Theme:** nothing depends on Omarchy tooling (no `omarchy/` files, Omarchy repo packages, or `omarchy-*` commands). The hackerman palette is baked into the `sykes_hackerman` oh-my-zsh theme (`arch-wsl/.oh-my-zsh/custom/themes/`). Neovim gets Omarchy's own `bjarneo/hackerman.nvim` (with `aether.nvim`), installed as a native package under `~/.local/share/nvim/site`. An `after/plugin/hackerman.lua` applies it over NeoVimConfig's default and switches lualine to `auto`, without touching the NeoVimConfig clone. btop gets a rendered `hackerman.theme`. tmux and herdr use the terminal palette, which the script sets by adding a Hackerman scheme to Windows Terminal's `settings.json`. It backs the file up first, applies the scheme (plus JetBrainsMono Nerd Font if installed) to the WSL profile, and unbinds `alt+enter` so tmux's split key works.
 

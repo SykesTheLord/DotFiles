@@ -20,6 +20,14 @@ export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 # wslu opens URLs (gh, az login, ...) in the Windows default browser
 command -v wslview &>/dev/null && export BROWSER=wslview
 
+# Development toolchains
+export DOTNET_ROOT=/usr/share/dotnet
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+export DOTNET_NOLOGO=1
+export JAVA_HOME=/usr/lib/jvm/default     # switch with: sudo archlinux-java set java-<n>-openjdk
+export CMAKE_GENERATOR=Ninja
+export CMAKE_EXPORT_COMPILE_COMMANDS=ON   # compile_commands.json for clangd
+
 typeset -U path
 path=("$HOME/.local/bin" $path "$HOME/.dotnet/tools" "$HOME/go/bin" "$HOME/.scripts")
 
@@ -29,6 +37,7 @@ command -v mise &>/dev/null && eval "$(mise activate zsh)"
 command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
 command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
 command -v fzf &>/dev/null && source <(fzf --zsh)
+command -v uv &>/dev/null && eval "$(uv generate-shell-completion zsh)"
 
 autoload -U +X bashcompinit && bashcompinit
 command -v terraform &>/dev/null && complete -o nospace -C /usr/bin/terraform terraform
