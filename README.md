@@ -7,6 +7,7 @@ Personal dotfiles and setup scripts for Arch Linux (primary), Ubuntu, Debian, Fe
 | Distro | Status | Desktop |
 |---|---|---|
 | Arch Linux | Full | Hyprland or Omarchy |
+| Arch Linux on WSL | CLI/TUI tools, hackerman theme | Windows Terminal |
 | Ubuntu | Desktop + Server | i3 |
 | Debian / Fedora / openSUSE | Minimal placeholder | — |
 
@@ -24,7 +25,7 @@ bash installDotfiles.sh [--dry-run]
 bash updateDotFiles.sh [--dry-run]
 ```
 
-Both scripts auto-detect the distro and copy only the relevant files. `installDotfiles.sh` backs up any existing file to a `.bak` copy before overwriting. `--dry-run` prints what would happen without making changes.
+Both scripts auto-detect the distro and copy only the relevant files (Arch under WSL uses `arch-wsl/` instead of `arch/`). `installDotfiles.sh` backs up any existing file to a `.bak` copy before overwriting. `--dry-run` prints what would happen without making changes.
 
 > `~/.config/hypr/components/monitors.conf` is excluded from sync — it's machine-specific.
 
@@ -86,6 +87,25 @@ Rsyncs the old home in before deploying new configs. Automatically excludes all 
 
 ---
 
+### `archWslSetup.sh` — Arch Linux on WSL
+
+Recreates the terminal side of the Omarchy machine on Arch under WSL, themed with Omarchy's **hackerman** palette. Runs in two stages:
+
+```bash
+# 1. As root on a fresh image: keyring, locale, sudo, user, /etc/wsl.conf (systemd + default user)
+bash archWslSetup.sh --user <name>
+#    then in PowerShell: wsl --terminate <distro>
+
+# 2. As that user
+bash archWslSetup.sh [--dry-run] [--skip-nvim] [--skip-terminal]
+```
+
+**What it installs:** zsh + oh-my-zsh, Neovim, tmux, herdr, lazygit, lazydocker, btop, fastfetch, fzf/ripgrep/fd/bat/eza/zoxide, gum, direnv, mise (node, Claude Code, Codex, Playwright), Docker, Terraform, Go, Rust, clang/cmake, Python, Ruby, JDK 11/17/21/25, .NET 8/9/10, network tools (nmap, tcpdump, dig, socat), `wslu` and `wl-clipboard`. yay is built from the AUR (`yay-bin`), and herdr/cliamp come from the AUR because Omarchy's package repo isn't available.
+
+**Theme:** nothing depends on Omarchy tooling (no `omarchy/` files, Omarchy repo packages, or `omarchy-*` commands). The hackerman palette is baked into the `sykes_hackerman` oh-my-zsh theme (`arch-wsl/.oh-my-zsh/custom/themes/`). Neovim gets Omarchy's own `bjarneo/hackerman.nvim` (with `aether.nvim`), installed as a native package under `~/.local/share/nvim/site`. An `after/plugin/hackerman.lua` applies it over NeoVimConfig's default and switches lualine to `auto`, without touching the NeoVimConfig clone. btop gets a rendered `hackerman.theme`. tmux and herdr use the terminal palette, which the script sets by adding a Hackerman scheme to Windows Terminal's `settings.json`. It backs the file up first, applies the scheme (plus JetBrainsMono Nerd Font if installed) to the WSL profile, and unbinds `alt+enter` so tmux's split key works.
+
+---
+
 ### `NvimSetup.sh` — Neovim bootstrap
 
 Installs Neovim and its dependencies, then clones [SykesTheLord/NeoVimConfig](https://github.com/SykesTheLord/NeoVimConfig) and runs its `install.sh`. The Neovim config is maintained in that separate repo (not stored here).
@@ -129,6 +149,7 @@ DotFiles/
 │   │   └── sykes_omarchy.zsh-theme
 │   └── .scripts/
 │       └── omarchy-zsh-colors-set
+├── arch-wsl/                # Arch on WSL: zsh, tmux, herdr, btop, git, mise + hackerman colors
 ├── ubuntu/                  # Ubuntu — desktop i3 + server variants
 │   ├── .config/i3/
 │   ├── .config/polybar/
@@ -142,6 +163,7 @@ DotFiles/
 ├── linuxSetup.sh            # Common tool installation (all distros)
 ├── archDesktopInstall.sh    # Hyprland desktop setup (Arch)
 ├── omarchyPostInstall.sh    # Personal layer on top of omarchy
+├── archWslSetup.sh          # Arch on WSL: CLI/TUI tools + hackerman theme
 ├── NvimSetup.sh             # Neovim bootstrap
 └── ubuntuServerInstalli3.sh # Ubuntu i3 setup
 ```

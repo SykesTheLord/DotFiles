@@ -6,9 +6,11 @@ is_fedora()  { [[ -f /etc/fedora-release ]]; }
 is_opensuse(){ grep -qi "opensuse" /etc/os-release 2>/dev/null; }
 is_debian()  { [[ "$(lsb_release -is 2>/dev/null)" == "Debian" ]]; }
 is_ubuntu()  { [[ "$(lsb_release -is 2>/dev/null)" =~ ^(Ubuntu|Neon)$ ]]; }
+is_wsl()     { grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; }
 
 get_distro_dir() {
-    if   is_arch;     then echo "arch"
+    if   is_arch && is_wsl; then echo "arch-wsl"
+    elif is_arch;     then echo "arch"
     elif is_fedora;   then echo "fedora"
     elif is_opensuse; then echo "opensuse"
     elif is_debian;   then echo "debian"
@@ -38,7 +40,8 @@ get_tracked_files() {
     local src="${1%/}"
     # Root-level files only (subdirs are handled as directories above)
     find "$src" -maxdepth 1 -mindepth 1 -type f | sed "s|^${src}/||" | sort
-    # Custom oh-my-zsh theme (only non-ignored file in .oh-my-zsh/)
-    local theme="$src/.oh-my-zsh/themes/sykes_custom_theme.zsh-theme"
-    [[ -f "$theme" ]] && echo ".oh-my-zsh/themes/sykes_custom_theme.zsh-theme"
+    # Custom oh-my-zsh themes (the only tracked files under .oh-my-zsh/)
+    if [[ -d "$src/.oh-my-zsh" ]]; then
+        find "$src/.oh-my-zsh" -type f -name '*.zsh-theme' | sed "s|^${src}/||" | sort
+    fi
 }

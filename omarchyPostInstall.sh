@@ -323,10 +323,15 @@ if [[ -d "$HOME/.config/nvim" ]]; then
     run mv "$HOME/.config/nvim" "$BACKUP"
 fi
 
-NVIM_TMP=$(mktemp -d)
-run git clone https://github.com/SykesTheLord/NeoVimConfig "$NVIM_TMP/NeoVimConfig"
-run bash "$NVIM_TMP/NeoVimConfig/install.sh"
-run rm -rf "$NVIM_TMP"
+# install.sh symlinks the clone to ~/.config/nvim, so the clone must stay put.
+NVIM_REPO_DIR="$HOME/Projects/NeoVimConfig"
+if [[ -d "$NVIM_REPO_DIR/.git" ]]; then
+    run git -C "$NVIM_REPO_DIR" pull --ff-only
+else
+    run mkdir -p "$(dirname "$NVIM_REPO_DIR")"
+    run git clone https://github.com/SykesTheLord/NeoVimConfig "$NVIM_REPO_DIR"
+fi
+run bash "$NVIM_REPO_DIR/install.sh"
 
 # ── done ─────────────────────────────────────────────────────────────────────
 

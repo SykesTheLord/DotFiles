@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a multi-distro dotfiles repository managing shell configs, window manager configs, and development environments for Arch, Ubuntu, Debian, Fedora, and openSUSE. Configs are deployed via **direct file copying** (not symlinks or GNU stow), managed by Python scripts.
+This is a multi-distro dotfiles repository managing shell configs, window manager configs, and development environments for Arch, Ubuntu, Debian, Fedora, and openSUSE. Configs are deployed via **direct file copying** (not symlinks or GNU stow), managed by bash scripts.
 
-Arch Linux is the primary/most-complete distro. Ubuntu has a server and desktop i3 variant. Debian, Fedora, and openSUSE have minimal placeholder configs.
+Arch Linux is the primary/most-complete distro. `arch-wsl/` holds the terminal-only configs for Arch under WSL; `dotfiles_lib.sh` selects it instead of `arch/` when running under WSL. Ubuntu has a server and desktop i3 variant. Debian, Fedora, and openSUSE have minimal placeholder configs.
 
 ## Dotfile Management Workflow
 
@@ -39,6 +39,8 @@ DotFiles/
 │   ├── .themes/        # GTK themes
 │   ├── .icons/
 │   └── .udev/          # Udev rules
+├── arch-wsl/           # Arch on WSL (terminal configs + hackerman colors)
+├── omarchy/            # Omarchy overrides + sykes_omarchy zsh theme
 ├── ubuntu/             # Ubuntu (desktop i3 + server variants)
 │   ├── .config/
 │   │   ├── i3/
@@ -70,6 +72,7 @@ The config is Lua-based with **vim.pack** (Neovim 0.12 built-in). Key facts:
 
 - **`linuxSetup.sh`** — Detects distro and installs common tools: Docker, PowerShell, Node.js, Neovim, LSP servers, etc.
 - **`archDesktopInstall.sh`** — Installs Hyprland desktop environment, Qt apps, udev rules, VMware
+- **`archWslSetup.sh`** — Arch on WSL in two stages (root: keyring/locale/user/`wsl.conf`; user: packages, yay + AUR, oh-my-zsh, `arch-wsl/` deploy, mise, NeoVimConfig, docker, Windows Terminal scheme). The WSL path must not depend on Omarchy tooling (no `omarchy/` files, Omarchy repo packages, or `omarchy-*` commands). Hackerman colors are hardcoded in `arch-wsl/.oh-my-zsh/custom/themes/sykes_hackerman.zsh-theme`, `arch-wsl/.config/btop/themes/hackerman.theme`, and `HACKERMAN_WT_SCHEME` in the script; keep them in sync. It reaches Neovim through `hackerman.nvim` + `aether.nvim` packages in `~/.local/share/nvim/site`, because the NeoVimConfig repo has no Omarchy theme support.
 - **`NvimSetup.sh`** — Installs Neovim + dependencies, then clones `SykesTheLord/NeoVimConfig` and runs its `install.sh`
 - **`ubuntuServerInstalli3.sh`** — Ubuntu server i3 window manager setup
 

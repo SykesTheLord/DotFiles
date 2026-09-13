@@ -105,10 +105,15 @@ else
     fi
 fi
 
-NVIM_TMP=$(mktemp -d)
-git clone "$CONFIG_REPO" "$NVIM_TMP/NeoVimConfig"
-bash "$NVIM_TMP/NeoVimConfig/install.sh"
-rm -rf "$NVIM_TMP"
+# install.sh symlinks the clone to ~/.config/nvim, so the clone must stay put.
+NVIM_REPO_DIR="$HOME/Projects/NeoVimConfig"
+if [ -d "$NVIM_REPO_DIR/.git" ]; then
+    git -C "$NVIM_REPO_DIR" pull --ff-only
+else
+    mkdir -p "$(dirname "$NVIM_REPO_DIR")"
+    git clone "$CONFIG_REPO" "$NVIM_REPO_DIR"
+fi
+bash "$NVIM_REPO_DIR/install.sh"
 
 if [[ "$DISTRO" == "Ubuntu" || "$DISTRO" == "Neon" ]]; then
     sudo apt install -y lua5.1 luarocks

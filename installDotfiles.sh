@@ -91,7 +91,7 @@ while IFS= read -r file; do
     copy_file "$file"
 done < <(get_tracked_files "$SRC")
 
-if is_arch && ! $DRY_RUN; then
+if [[ "$DISTRO" == "arch" ]] && ! $DRY_RUN; then
     echo "--- Arch post-install steps ---"
     if [[ -d "$HOME/.udev/rules" ]]; then
         sudo cp -r "$HOME/.udev/rules/"* /etc/udev/rules.d/.
@@ -100,7 +100,7 @@ if is_arch && ! $DRY_RUN; then
     sudo udevadm control --reload-rules && sudo udevadm trigger
     systemctl enable --user --now omarchy-battery-monitor.timer 2>/dev/null || true
     systemctl enable --user --now wallpaperset.service 2>/dev/null || true
-elif is_arch && $DRY_RUN; then
+elif [[ "$DISTRO" == "arch" ]] && $DRY_RUN; then
     echo "[DRY RUN] Would run Arch post-install (udev reload, hyprctl, systemd services)"
 fi
 
