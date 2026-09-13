@@ -22,6 +22,18 @@
 set -euo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# A Windows checkout with core.autocrlf=true converts files to CRLF, which breaks
+# bash and every config deployed from arch-wsl/ (.gitattributes prevents it for
+# fresh clones). This script itself must already be LF to get this far.
+if crlf_files=$(grep -rlI $'\r' "$DOTFILES_DIR/dotfiles_lib.sh" "$DOTFILES_DIR/arch-wsl"); then
+    echo "Error: these files have Windows (CRLF) line endings:" >&2
+    sed 's/^/  /' <<< "$crlf_files" >&2
+    echo "Convert the repo's text files to LF, then re-run:" >&2
+    echo "  cd '$DOTFILES_DIR' && grep -rlI --exclude-dir=.git \$'\\r' . | xargs -r sed -i 's/\\r\$//'" >&2
+    exit 1
+fi
+
 # shellcheck source=dotfiles_lib.sh
 source "$DOTFILES_DIR/dotfiles_lib.sh"
 
@@ -292,7 +304,9 @@ install_oh_my_zsh() {
 
 deploy_dotfiles() {
     log "Deploying arch-wsl/ configs (changed files are kept as .bak)"
-    run rsync -a --no-group --backup --suffix=.bak "$DOTFILES_DIR/arch-wsl/" "$HOME/"
+    # No -p: a checkout under /mnt/c shows every file as 0777, so new files get
+    # normal permissions and existing ones keep theirs.
+    run rsync -rlt --chmod=D755,F644 --backup --suffix=.bak "$DOTFILES_DIR/arch-wsl/" "$HOME/"
     run chmod +x "$HOME/.scripts/tmux-sessionizer"
 }
 

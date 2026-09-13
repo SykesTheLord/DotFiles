@@ -1,0 +1,4 @@
+# Always check out text files with LF endings, even from Windows Git
+# (core.autocrlf=true). The scripts run under bash and the configs are deployed
+# into Linux homes (including Arch on WSL from /mnt/c), where CRLF breaks them.
+* text=auto eol=lf

@@ -100,6 +100,8 @@ bash archWslSetup.sh --user <name>
 bash archWslSetup.sh [--dry-run] [--skip-nvim] [--skip-terminal]
 ```
 
+Running from a Windows checkout (`/mnt/c/...`) works. `.gitattributes` forces LF line endings, but a clone made before that file existed still has CRLF, and the script stops with a fix command. To re-checkout such a clone with LF from Windows Git, run `git rm -r --cached . && git reset --hard`; this discards uncommitted changes.
+
 **What it installs:** zsh + oh-my-zsh, Neovim, tmux, herdr, lazygit, lazydocker, btop, fastfetch, fzf/ripgrep/fd/bat/eza/zoxide, gum, direnv, mise (node, Claude Code, Codex, Playwright), Docker, Terraform, Go, Rust, Ruby, network tools (nmap, tcpdump, dig, socat), `wslu` and `wl-clipboard`, plus the development toolchains below. yay is built from the AUR (`yay-bin`), and herdr/cliamp come from the AUR because Omarchy's package repo isn't available.
 
 **Development tooling:**
