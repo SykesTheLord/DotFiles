@@ -257,16 +257,22 @@ blackarch_install_args() {
 }
 
 # import_github_keys <github-user> <target-user>: fetch the GitHub user's public
-# keys and install them as the target user's authorized_keys. Returns non-zero
-# (without dying) if no keys were found, so callers can decide whether to harden ssh.
+# keys and merge them into the target user's authorized_keys, replacing only the
+# marked block for that GitHub user so any other keys already in the file (a
+# manually-added key, another --github-user's block from an earlier run) are
+# left alone. Returns non-zero (without dying) if no keys were found, so
+# callers can decide whether to harden ssh.
 import_github_keys() {
     local gh_user="$1" target="$2"
-    local home keys
+    local home authorized_keys keys begin end tmp
     home=$(eval echo "~$target")
+    authorized_keys="$home/.ssh/authorized_keys"
+    begin="# --- archRemoteSetup.sh: GitHub keys for $gh_user (begin) ---"
+    end="# --- archRemoteSetup.sh: GitHub keys for $gh_user (end) ---"
 
     log "Importing SSH keys for GitHub user '$gh_user' into $target's authorized_keys"
     if $DRY_RUN; then
-        echo "  [dry-run] curl https://github.com/$gh_user.keys -> $home/.ssh/authorized_keys"
+        echo "  [dry-run] curl https://github.com/$gh_user.keys -> $authorized_keys (replacing only that user's managed block)"
         return 0
     fi
 
@@ -278,9 +284,17 @@ import_github_keys() {
     fi
 
     install -d -m 700 -o "$target" -g "$target" "$home/.ssh"
-    printf '%s\n' "$keys" > "$home/.ssh/authorized_keys"
-    chmod 600 "$home/.ssh/authorized_keys"
-    chown "$target:$target" "$home/.ssh/authorized_keys"
+    touch "$authorized_keys"
+
+    tmp=$(mktemp)
+    # Drop any existing managed block for this GitHub user; everything else in
+    # the file (other keys, other users' blocks) passes through untouched.
+    awk -v b="$begin" -v e="$end" '$0==b{skip=1} !skip{print} $0==e{skip=0}' "$authorized_keys" > "$tmp"
+    { cat "$tmp"; echo "$begin"; printf '%s\n' "$keys"; echo "$end"; } > "$authorized_keys"
+    rm -f "$tmp"
+
+    chmod 600 "$authorized_keys"
+    chown "$target:$target" "$authorized_keys"
 }
 
 # harden_sshd: only called once a working authorized_keys is in place. Disables
@@ -300,15 +314,26 @@ harden_sshd() {
     systemctl reload sshd
 }
 
-root_stage() {
-    if [[ -z "$NEW_USER" ]]; then
-        read -rp "Username to create for remote development: " NEW_USER
+# prompt_var <varname> <prompt-text>: like `read -rp`, but falls back to
+# /dev/tty when stdin isn't a terminal (e.g. the script was piped in, or run
+# over SSH without a pty), instead of silently reading EOF into an empty var.
+prompt_var() {
+    local __var="$1" __msg="$2"
+    # shellcheck disable=SC2229  # indirect: $__var expands to a variable NAME for read to assign
+    if [[ -t 0 ]]; then
+        read -rp "$__msg" "$__var"
+    elif [[ -r /dev/tty ]]; then
+        read -rp "$__msg" "$__var" < /dev/tty
+    else
+        die "$__msg (no terminal to prompt on; pass it as a flag instead)"
     fi
+}
+
+root_stage() {
+    [[ -n "$NEW_USER" ]] || prompt_var NEW_USER "Username to create for remote development: "
     [[ "$NEW_USER" =~ ^[a-z_][a-z0-9_-]*$ ]] || die "Invalid username: $NEW_USER"
 
-    if [[ -z "$GITHUB_USER" ]]; then
-        read -rp "GitHub username to import SSH keys from: " GITHUB_USER
-    fi
+    [[ -n "$GITHUB_USER" ]] || prompt_var GITHUB_USER "GitHub username to import SSH keys from: "
     [[ -n "$GITHUB_USER" ]] || die "A GitHub username is required to import SSH keys."
 
     log "Initialising pacman keyring"
@@ -319,13 +344,18 @@ root_stage() {
         log "Keyring already initialised"
     fi
 
+    # curl isn't part of the "base" group, but configure_blackarch() and
+    # import_github_keys() both shell out to it, and both run before the main
+    # bootstrap install below on a minimal pacstrap image. Install it first.
+    command -v curl &>/dev/null || run pacman -Sy --needed --noconfirm curl
+
     enable_multilib
     $SKIP_BLACKARCH || configure_blackarch
 
     log "Upgrading system and installing bootstrap packages"
     local repo_args=()
     mapfile -t repo_args < <(blackarch_install_args)
-    run pacman -Syu --needed --noconfirm "${repo_args[@]}" base-devel sudo zsh git openssh
+    run pacman -Syu --needed --noconfirm "${repo_args[@]}" base-devel sudo zsh git openssh curl
 
     log "Configuring locale (en_US.UTF-8)"
     if ! locale -a 2>/dev/null | grep -qix 'en_US\.utf8'; then
@@ -434,6 +464,13 @@ install_nvim_config() {
     if [[ -d "$NVIM_CONFIG_DIR/.git" ]]; then
         run git -C "$NVIM_CONFIG_DIR" pull --ff-only
     else
+        # A prior run interrupted mid-clone (e.g. network drop) can leave a
+        # non-empty, non-git directory here; `git clone` would refuse it and
+        # abort the whole rerun, so clear it out first.
+        if [[ -e "$NVIM_CONFIG_DIR" ]]; then
+            warn "$NVIM_CONFIG_DIR exists but isn't a git repo (likely an interrupted clone); removing it"
+            run rm -rf "$NVIM_CONFIG_DIR"
+        fi
         run mkdir -p "$(dirname "$NVIM_CONFIG_DIR")"
         run git clone "$NVIM_CONFIG_REPO" "$NVIM_CONFIG_DIR"
     fi
@@ -535,8 +572,12 @@ EOF
 
 setup_docker() {
     if [[ "$(ps -p 1 -o comm= 2>/dev/null)" == "systemd" ]]; then
-        log "Enabling docker.socket"
-        run sudo systemctl enable --now docker.socket
+        if systemctl is-enabled --quiet docker.socket 2>/dev/null && systemctl is-active --quiet docker.socket 2>/dev/null; then
+            log "docker.socket already enabled"
+        else
+            log "Enabling docker.socket"
+            run sudo systemctl enable --now docker.socket
+        fi
     else
         warn "systemd isn't PID 1, so docker won't start on boot."
     fi
@@ -555,19 +596,25 @@ set_login_shell() {
 }
 
 setup_qemu_guest_agent() {
+    if systemctl is-enabled --quiet qemu-guest-agent 2>/dev/null && systemctl is-active --quiet qemu-guest-agent 2>/dev/null; then
+        log "qemu-guest-agent already enabled"
+        return
+    fi
     log "Enabling qemu-guest-agent"
     run sudo systemctl enable --now qemu-guest-agent
 }
 
 # Unattended pacman + AUR update, run by systemd on a Mon/Wed/Sat 03:00 timer.
+# Idempotent: only (re)writes and reloads the units if their content actually
+# changed, and only (re)enables the timer if it isn't already enabled+active.
 install_auto_updates() {
-    log "Installing the Mon/Wed/Sat 03:00 auto-update timer"
-    if $DRY_RUN; then
-        echo "  [dry-run] write /usr/local/bin/arch-auto-update.sh, arch-auto-update.{service,timer}; enable timer"
-        return
-    fi
+    local script_path=/usr/local/bin/arch-auto-update.sh
+    local service_path=/etc/systemd/system/arch-auto-update.service
+    local timer_path=/etc/systemd/system/arch-auto-update.timer
+    local tmp_script tmp_service tmp_timer
 
-    sudo tee /usr/local/bin/arch-auto-update.sh > /dev/null << 'EOF'
+    tmp_script=$(mktemp)
+    cat > "$tmp_script" << 'EOF'
 #!/bin/bash
 # Written by DotFiles/archRemoteSetup.sh. Runs as root via the
 # arch-auto-update.service unit; AUR updates and the Claude Code check run as
@@ -600,10 +647,10 @@ if [[ -n "$installed_kernel" && "$installed_kernel" != "$running_kernel" ]]; the
 fi
 exit 0
 EOF
-    sudo sed -i "s/__TARGET_USER__/$USER/g" /usr/local/bin/arch-auto-update.sh
-    sudo chmod 755 /usr/local/bin/arch-auto-update.sh
+    sed -i "s/__TARGET_USER__/$USER/g" "$tmp_script"
 
-    sudo tee /etc/systemd/system/arch-auto-update.service > /dev/null << 'EOF'
+    tmp_service=$(mktemp)
+    cat > "$tmp_service" << 'EOF'
 [Unit]
 Description=Arch Linux system update (pacman + AUR)
 Wants=network-online.target
@@ -614,7 +661,8 @@ Type=oneshot
 ExecStart=/usr/local/bin/arch-auto-update.sh
 EOF
 
-    sudo tee /etc/systemd/system/arch-auto-update.timer > /dev/null << 'EOF'
+    tmp_timer=$(mktemp)
+    cat > "$tmp_timer" << 'EOF'
 [Unit]
 Description=Run arch-auto-update.service Mon/Wed/Sat at 03:00
 
@@ -625,6 +673,30 @@ Persistent=true
 [Install]
 WantedBy=timers.target
 EOF
+
+    local changed=false
+    cmp -s "$tmp_script" "$script_path" 2>/dev/null || changed=true
+    cmp -s "$tmp_service" "$service_path" 2>/dev/null || changed=true
+    cmp -s "$tmp_timer" "$timer_path" 2>/dev/null || changed=true
+
+    if ! $changed && systemctl is-enabled --quiet arch-auto-update.timer 2>/dev/null \
+        && systemctl is-active --quiet arch-auto-update.timer 2>/dev/null; then
+        log "Auto-update timer already installed and enabled"
+        rm -f "$tmp_script" "$tmp_service" "$tmp_timer"
+        return
+    fi
+
+    log "Installing the Mon/Wed/Sat 03:00 auto-update timer"
+    if $DRY_RUN; then
+        echo "  [dry-run] write $script_path, ${service_path##*/}, ${timer_path##*/}; enable timer"
+        rm -f "$tmp_script" "$tmp_service" "$tmp_timer"
+        return
+    fi
+
+    sudo install -m 755 "$tmp_script" "$script_path"
+    sudo install -m 644 "$tmp_service" "$service_path"
+    sudo install -m 644 "$tmp_timer" "$timer_path"
+    rm -f "$tmp_script" "$tmp_service" "$tmp_timer"
 
     sudo systemctl daemon-reload
     sudo systemctl enable --now arch-auto-update.timer
