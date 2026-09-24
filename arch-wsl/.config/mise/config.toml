@@ -1,8 +1,7 @@
+# Standalone CLI binaries (aqua backend). Node.js comes from pacman, for Mason.
 [tools]
 claude = "latest"
 codex = "latest"
-node = "26.2.0"
-"npm:playwright" = "latest"
 
 [settings.upgrade]
 auto_prune = false

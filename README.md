@@ -8,6 +8,7 @@ Personal dotfiles and setup scripts for Arch Linux (primary), Ubuntu, Debian, Fe
 |---|---|---|
 | Arch Linux | Full | Hyprland or Omarchy |
 | Arch Linux on WSL | CLI/TUI tools, hackerman theme | Windows Terminal |
+| Arch Linux (remote SSH dev box) | CLI/TUI tools, GitHub key import, QEMU guest agent, auto-updates | Headless |
 | Ubuntu | Desktop + Server | i3 |
 | Debian / Fedora / openSUSE | Minimal placeholder | — |
 
@@ -97,26 +98,60 @@ bash archWslSetup.sh --user <name>
 #    then in PowerShell: wsl --terminate <distro>
 
 # 2. As that user
-bash archWslSetup.sh [--dry-run] [--skip-nvim] [--skip-terminal]
+bash archWslSetup.sh [--dry-run] [--skip-nvim] [--skip-terminal] [--skip-blackarch]
 ```
+
+**Package sources:** both stages enable the **multilib** repository and add the **BlackArch** repository; each step is skipped once done, and `--skip-blackarch` opts out of BlackArch. BlackArch's `strap.sh` isn't used because its signature check is commented out. Instead the script downloads the BlackArch keyring pinned by version and SHA-256 (the tarball's signature was verified against the BlackArch Master key `CBA3C7D4798912702DCF568E67D8BDF42AD93F4E`). It installs the keys, fetches the mirrorlist, adds `[blackarch]` to `pacman.conf`, and installs `blackarch-keyring` and `blackarch-mirrorlist` so pacman keeps them current. No BlackArch tools are installed by default; add them with `sudo pacman -S <tool>` or a group such as `blackarch-webapp`.
 
 Running from a Windows checkout (`/mnt/c/...`) works. `.gitattributes` forces LF line endings, but a clone made before that file existed still has CRLF, and the script stops with a fix command. To re-checkout such a clone with LF from Windows Git, run `git rm -r --cached . && git reset --hard`; this discards uncommitted changes.
 
-**What it installs:** zsh + oh-my-zsh, Neovim, tmux, herdr, lazygit, lazydocker, btop, fastfetch, fzf/ripgrep/fd/bat/eza/zoxide, gum, direnv, mise (node, Claude Code, Codex, Playwright), Docker, Terraform, Go, Rust, Ruby, network tools (nmap, tcpdump, dig, socat), `wslu` and `wl-clipboard`, plus the development toolchains below. yay is built from the AUR (`yay-bin`), and herdr/cliamp come from the AUR because Omarchy's package repo isn't available.
+**What it installs:** zsh + oh-my-zsh, Neovim, tmux, herdr, lazygit, lazydocker, btop, fastfetch, vim, fzf/ripgrep/fd/bat/eza/zoxide, jq, direnv, tldr, hyperfine, mise (Claude Code, Codex), Docker, Terraform, Go, Rust, network tools (dig, nc, telnet, whois, nmap, tcpdump), `downgrade`, `wslu` and `wl-clipboard`, plus the development toolchains below. The package set is aimed at development; desktop, media, personal and hardware tools from the Omarchy machine are left out. yay is built from the AUR (`yay-bin`), and herdr comes from the AUR because Omarchy's package repo isn't available.
 
 **Development tooling:**
 
 | Language | System | Neovim (Mason) |
 |---|---|---|
 | C / C++ | gcc, clang (clangd, clang-tidy), gdb, lldb, cmake, ninja, meson, bear, ccache, gtest, valgrind, cppcheck, strace/ltrace | clangd, clang-format, cpptools, cpplint, cmake-language-server, cmakelang, cmakelint |
-| C# / .NET | .NET SDK 10/9/8, ASP.NET Core runtimes 10/9/8, global tools `dotnet-ef` and `csharpier` | csharp-language-server 0.16.0, netcoredbg, csharpier |
-| Java | JDK 11/17/21/25 (default 25 via `archlinux-java`), Maven, Gradle | jdtls, java-debug-adapter, google-java-format, checkstyle |
+| C# / .NET | .NET SDK 10/8 (LTS), ASP.NET Core runtimes 10/8, global tools `dotnet-ef` and `csharpier` | csharp-language-server 0.16.0, netcoredbg, csharpier |
+| Java | JDK 17/21/25 LTS (default 25 via `archlinux-java`), Maven, Gradle | jdtls, java-debug-adapter, google-java-format, checkstyle |
 | Python | python, pip, pipx, uv, ruff, pytest, ipython, debugpy | jedi-language-server, black, pylint, debugpy |
 | Bash | shellcheck, shfmt, bats | bash-language-server, shellcheck, beautysh |
 
 The Mason packages are installed by a headless Neovim that waits for them to finish, so LSP, debugging and formatting work on the first launch. `.zshrc` sets `JAVA_HOME`, `DOTNET_ROOT`, .NET telemetry opt-out, and CMake defaults (Ninja generator, `compile_commands.json` for clangd).
 
 **Theme:** nothing depends on Omarchy tooling (no `omarchy/` files, Omarchy repo packages, or `omarchy-*` commands). The hackerman palette is baked into the `sykes_hackerman` oh-my-zsh theme (`arch-wsl/.oh-my-zsh/custom/themes/`). Neovim gets Omarchy's own `bjarneo/hackerman.nvim` (with `aether.nvim`), installed as a native package under `~/.local/share/nvim/site`. An `after/plugin/hackerman.lua` applies it over NeoVimConfig's default and switches lualine to `auto`, without touching the NeoVimConfig clone. btop gets a rendered `hackerman.theme`. tmux and herdr use the terminal palette, which the script sets by adding a Hackerman scheme to Windows Terminal's `settings.json`. It backs the file up first, applies the scheme (plus JetBrainsMono Nerd Font if installed) to the WSL profile, and unbinds `alt+enter` so tmux's split key works.
+
+---
+
+### `archRemoteSetup.sh` — Arch remote SSH dev box (QEMU guest)
+
+Sets up a headless Arch box, running as a QEMU guest, as a remote SSH development machine. Runs in two stages:
+
+```bash
+# 1. As root on a fresh box: keyring, locale, sudo, user, GitHub SSH key import
+bash archRemoteSetup.sh --user <name> [--github-user <name>]
+#    prompts for whichever of --user/--github-user is omitted
+
+# 2. As that user
+bash archRemoteSetup.sh [--dry-run] [--skip-nvim] [--skip-blackarch] \
+    [--skip-qemu-agent] [--skip-auto-update]
+```
+
+Stage 1 fetches the given GitHub user's public keys (`https://github.com/<user>.keys`) into the new user's `~/.ssh/authorized_keys`, locking the account's password in the process. Once a key is confirmed installed, it disables SSH password and root login (`PasswordAuthentication no`, `PermitRootLogin no`) so the box is only reachable with that key; `--skip-harden` leaves `sshd_config` alone.
+
+Otherwise this mirrors `archWslSetup.sh`: same multilib/BlackArch handling, the same development package set and Mason install waiter, and it reuses `arch-wsl/`'s dotfiles directly (they're terminal-only and don't depend on WSL — the hackerman zsh theme uses 24-bit color, so it looks the same over plain SSH). It skips the WSL/Windows-only pieces: no `wsl.conf`, Windows Terminal integration, `wslu`, `wl-clipboard`, or `hackerman.nvim`.
+
+**QEMU guest agent:** stage 2 installs and enables `qemu-guest-agent` (`--skip-qemu-agent` opts out), so the QEMU host can request clean shutdowns/reboots, freeze/thaw the filesystem for snapshots, and read the guest's IP.
+
+**Unattended updates:** stage 2 also installs a systemd timer (`--skip-auto-update` opts out) that runs `pacman -Syu`, then AUR updates via `yay` as the dev user, then `paccache -rk2`, every **Monday, Wednesday and Saturday at 03:00**:
+
+```bash
+systemctl status arch-auto-update.timer   # next scheduled run
+sudo systemctl start arch-auto-update.service   # run it now
+journalctl -u arch-auto-update.service          # last run's output
+```
+
+Arch's rolling `linux` package has no live-patching feed to apply kernel security updates without a restart (`kpatch` exists, but it needs a patch hand-built against the exact kernel build, which doesn't scale to arbitrary Arch kernel bumps). Instead, once the timer detects the installed kernel no longer matches the running one, it reboots automatically — but only when nobody is logged in (`who`) and no Claude Code agent is running for the dev user (`pgrep -f claude`), so it never yanks the machine out from under an active session or an in-flight agent. If either check fails, the reboot is skipped and retried at the next Mon/Wed/Sat window; check `journalctl -t arch-auto-update` for deferrals.
 
 ---
 
@@ -164,6 +199,7 @@ DotFiles/
 │   └── .scripts/
 │       └── omarchy-zsh-colors-set
 ├── arch-wsl/                # Arch on WSL: zsh, tmux, herdr, btop, git, mise + hackerman colors
+│                            #   (also reused by archRemoteSetup.sh for the remote dev box)
 ├── ubuntu/                  # Ubuntu — desktop i3 + server variants
 │   ├── .config/i3/
 │   ├── .config/polybar/
@@ -178,6 +214,7 @@ DotFiles/
 ├── archDesktopInstall.sh    # Hyprland desktop setup (Arch)
 ├── omarchyPostInstall.sh    # Personal layer on top of omarchy
 ├── archWslSetup.sh          # Arch on WSL: CLI/TUI tools + hackerman theme
+├── archRemoteSetup.sh       # Arch remote SSH dev box (QEMU guest): GitHub key import + hardening, guest agent, auto-updates
 ├── NvimSetup.sh             # Neovim bootstrap
 └── ubuntuServerInstalli3.sh # Ubuntu i3 setup
 ```
