@@ -10,21 +10,28 @@
 #
 # Stage 1, as root on a fresh box (clone this repo somewhere world-readable,
 # e.g. /opt/DotFiles, or re-clone it as the new user for stage 2):
-#   bash archRemoteSetup.sh --user <name> [--github-user <name>]
-#   Initialises the keyring, locale, sudo, the user account, and imports that
-#   GitHub user's public keys into ~/.ssh/authorized_keys. Prompts for
-#   whichever of --user/--github-user is omitted. Once a key is installed,
-#   disables SSH password and root login (--skip-harden opts out).
+#   bash archRemoteSetup.sh --user <name> [--github-user <name>] [--skip-github]
+#   Initialises the keyring, locale, sudo and the user account. Prompts for
+#   --user if omitted. Unless --github-user is already given (or --skip-github
+#   opts out), it then always asks whether to enroll a GitHub account's public
+#   keys into ~/.ssh/authorized_keys, and if so, which one. Once a key is
+#   installed, disables SSH password and root login (--skip-harden opts out);
+#   if you decline enrollment, the account is left with a locked password and
+#   no key, so set one (`passwd <user>`) or add a key by hand before
+#   disconnecting.
 #
-# Stage 2, as that user:
+# Stage 2, as that user (also asks the same GitHub-enrollment question as
+# stage 1, so an already-configured, non-root user can self-service add or
+# refresh their own keys; defaults to no, and never touches sshd_config):
 #   bash archRemoteSetup.sh [--dry-run] [--skip-nvim] [--skip-blackarch] \
-#       [--skip-qemu-agent] [--skip-auto-update]
+#       [--skip-qemu-agent] [--skip-auto-update] [--github-user <name>] [--skip-github]
 #
 #   --dry-run          Print what would happen without changing anything
 #   --skip-nvim        Don't install NeoVimConfig or Mason packages
 #   --skip-blackarch   Don't add the BlackArch repository (either stage)
 #   --skip-qemu-agent  Don't install/enable qemu-guest-agent
 #   --skip-auto-update Don't install the Mon/Wed/Sat 03:00 update timer
+#   --skip-github      Don't ask about GitHub key enrollment (either stage)
 #
 # Both stages enable the multilib repository and add the BlackArch repository
 # (keyring pinned by version + SHA-256); both steps are skipped once done.
@@ -51,6 +58,7 @@ SKIP_BLACKARCH=false
 SKIP_HARDEN=false
 SKIP_QEMU_AGENT=false
 SKIP_AUTO_UPDATE=false
+SKIP_GITHUB=false
 NEW_USER=""
 GITHUB_USER=""
 
@@ -62,6 +70,7 @@ while [[ $# -gt 0 ]]; do
         --skip-harden)      SKIP_HARDEN=true; shift ;;
         --skip-qemu-agent)  SKIP_QEMU_AGENT=true; shift ;;
         --skip-auto-update) SKIP_AUTO_UPDATE=true; shift ;;
+        --skip-github)      SKIP_GITHUB=true; shift ;;
         --user)
             [[ -n "${2:-}" ]] || { echo "Error: --user requires a name"; exit 1; }
             NEW_USER="$2"; shift 2 ;;
@@ -261,7 +270,9 @@ blackarch_install_args() {
 # marked block for that GitHub user so any other keys already in the file (a
 # manually-added key, another --github-user's block from an earlier run) are
 # left alone. Returns non-zero (without dying) if no keys were found, so
-# callers can decide whether to harden ssh.
+# callers can decide whether to harden ssh. Works both as root (stage 1,
+# target is a different, newly-created user) and as the target user themselves
+# (stage 2, self-service enrollment into their own already-owned homedir).
 import_github_keys() {
     local gh_user="$1" target="$2"
     local home authorized_keys keys begin end tmp
@@ -283,7 +294,11 @@ import_github_keys() {
         return 1
     fi
 
-    install -d -m 700 -o "$target" -g "$target" "$home/.ssh"
+    if [[ $EUID -eq 0 ]]; then
+        install -d -m 700 -o "$target" -g "$target" "$home/.ssh"
+    else
+        install -d -m 700 "$home/.ssh"   # already ours; no chown needed (or permitted)
+    fi
     touch "$authorized_keys"
 
     tmp=$(mktemp)
@@ -294,7 +309,8 @@ import_github_keys() {
     rm -f "$tmp"
 
     chmod 600 "$authorized_keys"
-    chown "$target:$target" "$authorized_keys"
+    [[ $EUID -eq 0 ]] && chown "$target:$target" "$authorized_keys"
+    return 0
 }
 
 # harden_sshd: only called once a working authorized_keys is in place. Disables
@@ -329,12 +345,43 @@ prompt_var() {
     fi
 }
 
+# confirm <prompt-text> [default(y|n)]: yes/no prompt with the same /dev/tty
+# fallback as prompt_var, except a fully non-interactive shell takes the
+# default instead of dying (there's always a sensible default here, unlike a
+# username). Returns 0 for yes, 1 for no.
+confirm() {
+    local msg="$1" default="${2:-y}" reply=""
+    [[ "$default" == y ]] && msg="$msg [Y/n] " || msg="$msg [y/N] "
+    if [[ -t 0 ]]; then
+        read -rp "$msg" reply
+    elif [[ -r /dev/tty ]]; then
+        read -rp "$msg" reply < /dev/tty
+    fi
+    reply="${reply:-$default}"
+    [[ "$reply" =~ ^[Yy] ]]
+}
+
+# decide_github_user <target-user> <confirm-default y|n>: sets GITHUB_USER
+# (unless --skip-github or --github-user already decided it) by always asking
+# whether to enroll a GitHub account's keys for <target-user>, and if so,
+# which one. Runs in both stages: stage 1 asks for the account it's about to
+# create, stage 2 lets an already-configured, non-root user enroll (or
+# refresh) their own keys the same way.
+decide_github_user() {
+    local target="$1" default="$2"
+    if $SKIP_GITHUB; then
+        [[ -z "$GITHUB_USER" ]] || warn "--skip-github set; ignoring --github-user."
+        GITHUB_USER=""
+    elif [[ -z "$GITHUB_USER" ]] && confirm "Enroll SSH keys from a GitHub account for $target?" "$default"; then
+        prompt_var GITHUB_USER "GitHub username to import SSH keys from: "
+    fi
+}
+
 root_stage() {
     [[ -n "$NEW_USER" ]] || prompt_var NEW_USER "Username to create for remote development: "
     [[ "$NEW_USER" =~ ^[a-z_][a-z0-9_-]*$ ]] || die "Invalid username: $NEW_USER"
 
-    [[ -n "$GITHUB_USER" ]] || prompt_var GITHUB_USER "GitHub username to import SSH keys from: "
-    [[ -n "$GITHUB_USER" ]] || die "A GitHub username is required to import SSH keys."
+    decide_github_user "$NEW_USER" y
 
     log "Initialising pacman keyring"
     if [[ ! -s /etc/pacman.d/gnupg/pubring.kbx && ! -s /etc/pacman.d/gnupg/pubring.gpg ]]; then
@@ -373,18 +420,22 @@ root_stage() {
     else
         log "Creating user $NEW_USER"
         run useradd -m -G wheel -s /usr/bin/zsh "$NEW_USER"
-        run passwd -l "$NEW_USER"   # key-only login; import_github_keys sets up access
+        run passwd -l "$NEW_USER"   # locked until a key is imported or a password is set below
     fi
 
-    local imported=true
-    import_github_keys "$GITHUB_USER" "$NEW_USER" || imported=false
+    local imported=false
+    if [[ -n "$GITHUB_USER" ]]; then
+        import_github_keys "$GITHUB_USER" "$NEW_USER" && imported=true
+    fi
 
     if $imported && ! $SKIP_HARDEN; then
         harden_sshd
-    elif ! $imported; then
+    elif $imported; then
+        warn "--skip-harden set; sshd_config left untouched."
+    elif [[ -n "$GITHUB_USER" ]]; then
         warn "No SSH keys imported; leaving sshd_config untouched. Re-run with a valid --github-user, or add a key manually, before locking out password login."
     else
-        warn "--skip-harden set; sshd_config left untouched."
+        warn "No GitHub account enrolled; $NEW_USER has a locked password and no SSH key. Run 'passwd $NEW_USER' or add a key to that user's ~/.ssh/authorized_keys before disconnecting."
     fi
 
     if [[ "$DOTFILES_DIR" == /root/* ]]; then
@@ -703,11 +754,20 @@ EOF
 }
 
 user_stage() {
-    [[ -z "$NEW_USER" && -z "$GITHUB_USER" ]] || warn "--user/--github-user are only used when running as root; ignoring them."
+    [[ -z "$NEW_USER" ]] || warn "--user is only used when running as root; ignoring it."
     command -v sudo &>/dev/null || die "sudo is missing. Run stage 1 as root first: bash archRemoteSetup.sh --user <name>"
     $DRY_RUN || sudo -v || die "sudo access is required."
 
     log "Starting Arch remote dev box setup (dry_run=$DRY_RUN)"
+
+    # Unlike stage 1 (a brand-new account with no other access yet), $USER is
+    # already logged in here, so enrollment is opt-in (default no) and never
+    # touches sshd_config — it's just self-service key add/refresh.
+    decide_github_user "$USER" n
+    if [[ -n "$GITHUB_USER" ]]; then
+        import_github_keys "$GITHUB_USER" "$USER" \
+            || warn "No SSH keys imported for GitHub user '$GITHUB_USER'."
+    fi
 
     install_packages
     install_yay

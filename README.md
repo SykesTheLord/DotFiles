@@ -129,15 +129,15 @@ Sets up a headless Arch box, running as a QEMU guest, as a remote SSH developmen
 
 ```bash
 # 1. As root on a fresh box: keyring, locale, sudo, user, GitHub SSH key import
-bash archRemoteSetup.sh --user <name> [--github-user <name>]
-#    prompts for whichever of --user/--github-user is omitted
+bash archRemoteSetup.sh --user <name> [--github-user <name>] [--skip-github]
+#    prompts for --user if omitted
 
-# 2. As that user
+# 2. As that user (self-service key enrollment, same question, default no)
 bash archRemoteSetup.sh [--dry-run] [--skip-nvim] [--skip-blackarch] \
-    [--skip-qemu-agent] [--skip-auto-update]
+    [--skip-qemu-agent] [--skip-auto-update] [--github-user <name>] [--skip-github]
 ```
 
-Stage 1 fetches the given GitHub user's public keys (`https://github.com/<user>.keys`) into the new user's `~/.ssh/authorized_keys`, locking the account's password in the process. Once a key is confirmed installed, it disables SSH password and root login (`PasswordAuthentication no`, `PermitRootLogin no`) so the box is only reachable with that key; `--skip-harden` leaves `sshd_config` alone.
+Both stages always ask — unless `--github-user` was already given, or `--skip-github` opts out — whether to enroll a GitHub account's public keys (`https://github.com/<user>.keys`) into that user's `~/.ssh/authorized_keys`; if you say yes, it then asks which account. Stage 1 defaults to yes (the new account has no other access yet); stage 2 defaults to no, since by then you're already logged in as that user and enrollment there is just self-service key add/refresh — it never touches `sshd_config`. Reruns (in either stage) only touch that GitHub user's own block in the file, so a manually-added key or another account's block from an earlier run is left alone. In stage 1, once a key is confirmed installed, it disables SSH password and root login (`PasswordAuthentication no`, `PermitRootLogin no`) so the box is only reachable with that key; `--skip-harden` leaves `sshd_config` alone. If you decline enrollment in stage 1, the account is left with a locked password and no key — set one with `passwd <user>` or add a key by hand before disconnecting.
 
 Otherwise this mirrors `archWslSetup.sh`: same multilib/BlackArch handling, the same development package set and Mason install waiter, and it reuses `arch-wsl/`'s dotfiles directly (they're terminal-only and don't depend on WSL — the hackerman zsh theme uses 24-bit color, so it looks the same over plain SSH). It skips the WSL/Windows-only pieces: no `wsl.conf`, Windows Terminal integration, `wslu`, `wl-clipboard`, or `hackerman.nvim`.
 
