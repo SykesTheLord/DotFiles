@@ -667,10 +667,16 @@ install_auto_updates() {
     tmp_script=$(mktemp)
     cat > "$tmp_script" << 'EOF'
 #!/bin/bash
-# Written by DotFiles/archRemoteSetup.sh. Runs as root via the
-# arch-auto-update.service unit; AUR updates and the Claude Code check run as
-# __TARGET_USER__ via runuser.
+# Written by DotFiles/archRemoteSetup.sh. Must run as root (the
+# arch-auto-update.service unit pins User=root); AUR updates and the Claude
+# Code check run as __TARGET_USER__ via runuser.
 set -euo pipefail
+
+if [[ $EUID -ne 0 ]]; then
+    echo "arch-auto-update.sh must run as root (it's meant to run via" \
+         "arch-auto-update.service, e.g. 'sudo systemctl start arch-auto-update.service')" >&2
+    exit 1
+fi
 
 pacman -Syu --noconfirm
 if runuser -l '__TARGET_USER__' -c 'command -v yay' &>/dev/null; then
@@ -709,6 +715,7 @@ After=network-online.target
 
 [Service]
 Type=oneshot
+User=root
 ExecStart=/usr/local/bin/arch-auto-update.sh
 EOF
 
