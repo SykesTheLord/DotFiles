@@ -4,8 +4,11 @@
 is_arch()    { [[ -f /etc/arch-release ]]; }
 is_fedora()  { [[ -f /etc/fedora-release ]]; }
 is_opensuse(){ grep -qi "opensuse" /etc/os-release 2>/dev/null; }
-is_debian()  { [[ "$(lsb_release -is 2>/dev/null)" == "Debian" ]]; }
-is_ubuntu()  { [[ "$(lsb_release -is 2>/dev/null)" =~ ^(Ubuntu|Neon)$ ]]; }
+# os-release based (not lsb_release): lsb_release needs a package minimal/cloud
+# images often don't have, which silently broke detection there.
+is_debian()  { [[ "$(. /etc/os-release 2>/dev/null; echo "$ID")" == "debian" ]]; }
+is_ubuntu()  { [[ "$(. /etc/os-release 2>/dev/null; echo "$ID")" =~ ^(ubuntu|neon)$ ]]; }
+is_centos()  { [[ "$(. /etc/os-release 2>/dev/null; echo "$ID")" =~ ^(centos|rhel|rocky|almalinux)$ ]]; }
 is_wsl()     { grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; }
 
 get_distro_dir() {

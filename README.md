@@ -8,7 +8,7 @@ Personal dotfiles and setup scripts for Arch Linux (primary), Ubuntu, Debian, Fe
 |---|---|---|
 | Arch Linux | Full | Hyprland or Omarchy |
 | Arch Linux on WSL | CLI/TUI tools, hackerman theme | Windows Terminal |
-| Arch Linux (remote SSH dev box) | CLI/TUI tools, GitHub key import, QEMU guest agent, auto-updates | Headless |
+| Arch, Debian, Ubuntu, Fedora, CentOS family, openSUSE (remote SSH dev box) | CLI/TUI tools, GitHub key import, QEMU guest agent, auto-updates | Headless |
 | Ubuntu | Desktop + Server | i3 |
 | Debian / Fedora / openSUSE | Minimal placeholder | — |
 
@@ -123,47 +123,49 @@ The Mason packages are installed by a headless Neovim that waits for them to fin
 
 ---
 
-### `archRemoteSetup.sh` — Arch remote SSH dev box (QEMU guest)
+### `linuxRemoteSetup.sh` — Remote SSH dev box (QEMU guest), any distro
 
-Sets up a headless Arch box, running as a QEMU guest, as a remote SSH development machine. Runs in two stages:
+Sets up a headless Linux box, running as a QEMU guest, as a remote SSH development machine. Supports Arch, Debian, Ubuntu, Fedora, the CentOS/RHEL/Rocky/AlmaLinux family, and openSUSE (auto-detected via `dotfiles_lib.sh`).
+
+**Quick start, as root on a fresh box** (one line: clone the repo and run stage 1):
 
 ```bash
-# 1. As root on a fresh box: keyring, locale, sudo, user, GitHub SSH key import
-bash archRemoteSetup.sh --user <name> [--github-user <name>] [--skip-github]
+git clone https://github.com/SykesTheLord/DotFiles.git /opt/DotFiles && cd /opt/DotFiles && bash linuxRemoteSetup.sh --user <name>
+```
+
+Then log in as `<name>` and run `cd /opt/DotFiles && bash linuxRemoteSetup.sh` again for stage 2 — it can't be chained into the same command, since stage 1 deliberately locks that account's password until you've confirmed key-based SSH access works. Full two-stage breakdown:
+
+```bash
+# 1. As root on a fresh box: package manager init, locale, sudo, user, GitHub SSH key import
+bash linuxRemoteSetup.sh --user <name> [--github-user <name>] [--skip-github]
 #    prompts for --user if omitted
 
 # 2. As that user (self-service key enrollment, same question, default no)
-bash archRemoteSetup.sh [--dry-run] [--skip-nvim] [--skip-blackarch] \
+bash linuxRemoteSetup.sh [--dry-run] [--skip-nvim] [--skip-blackarch] \
     [--skip-qemu-agent] [--skip-auto-update] [--github-user <name>] [--skip-github]
 ```
 
 Both stages always ask — unless `--github-user` was already given, or `--skip-github` opts out — whether to enroll a GitHub account's public keys (`https://github.com/<user>.keys`) into that user's `~/.ssh/authorized_keys`; if you say yes, it then asks which account. Stage 1 defaults to yes (the new account has no other access yet); stage 2 defaults to no, since by then you're already logged in as that user and enrollment there is just self-service key add/refresh — it never touches `sshd_config`. Reruns (in either stage) only touch that GitHub user's own block in the file, so a manually-added key or another account's block from an earlier run is left alone. In stage 1, once a key is confirmed installed, it disables SSH password and root login (`PasswordAuthentication no`, `PermitRootLogin no`) so the box is only reachable with that key; `--skip-harden` leaves `sshd_config` alone. If you decline enrollment in stage 1, the account is left with a locked password and no key — set one with `passwd <user>` or add a key by hand before disconnecting.
 
-Otherwise this mirrors `archWslSetup.sh`: same multilib/BlackArch handling, the same development package set and Mason install waiter, and it reuses `arch-wsl/`'s dotfiles directly (they're terminal-only and don't depend on WSL — the hackerman zsh theme uses 24-bit color, so it looks the same over plain SSH). It skips the WSL/Windows-only pieces: no `wsl.conf`, Windows Terminal integration, `wslu`, `wl-clipboard`, or `hackerman.nvim`.
+Otherwise this mirrors `archWslSetup.sh`'s development package set and Mason install waiter, and reuses `arch-wsl/`'s dotfiles directly on every distro (they're terminal-only and don't depend on WSL or Arch — the hackerman zsh theme uses 24-bit color, so it looks the same over plain SSH anywhere).
 
----
+**What's Arch-only:** BlackArch and the AUR-only tools `herdr` and `downgrade` have no real equivalent in the other distros' default repos and no safe generic install method, so they stay exactly as they were on Arch (`--skip-blackarch` still works there) and are simply skipped elsewhere with a log line — no faked-up stand-in. `lazygit`/`lazydocker` aren't packaged on the other distros either, but both publish prebuilt Linux binaries on their GitHub releases — the same install method their own docs recommend — so `install_lazygit_lazydocker` fetches the latest release tarball for the box's architecture (x86_64/arm64) and installs the binary to `/usr/local/bin` instead of skipping them.
 
-### `migrateArchAutoUpdate.sh` — Fix up an older auto-update timer
+**Per-distro differences handled automatically:** the sudo group (`wheel` vs. Debian/Ubuntu's `sudo`), the sshd systemd unit name (`sshd` vs. Debian/Ubuntu's `ssh`), locale setup (`/etc/locale.gen` vs. `glibc-langpack-en` + `/etc/locale.conf` vs. `update-locale`), Java's "default version" (Arch's `archlinux-java` vs. a generic `/usr/lib/jvm/default` symlink + `update-alternatives`/`alternatives` elsewhere — the path is kept the same across distros since `.zshrc`'s `JAVA_HOME` hardcodes it), and Docker (native packages everywhere except Fedora/CentOS, which don't ship `docker-ce` at all and get Docker's official repo added first). Package installs tolerate individual unknown package names (`apt-get install --ignore-missing`, `dnf ... --skip-broken`, `zypper ... --ignore-unknown`) rather than aborting the whole run, since package availability for less common dev tools varies by distro release.
 
-A box provisioned by an `archRemoteSetup.sh` from before its `arch-auto-update.service` pinned `User=root` relied on systemd's implicit default instead, so if the script ever ran without root (manual testing, an unusual systemd default) it failed with pacman's `you cannot perform this operation unless you are root`. Re-running `archRemoteSetup.sh`'s user stage already self-heals this (`install_auto_updates` diffs and redeploys on any content change), but doing that just to fix a systemd unit also reruns the full package install. This script does only the fix:
-
-```bash
-sudo bash migrateArchAutoUpdate.sh [--dry-run] [--target-user <name>]
-```
-
-It recovers the dev user from the `runuser -l '<user>'` calls already embedded in the installed `/usr/local/bin/arch-auto-update.sh` (pass `--target-user` only if that fails), does nothing if the box is already on the fixed version, and otherwise: stops the old timer, backs up the old script/service/timer to `.bak`, writes the current versions, `daemon-reload`s, `reset-failed`s (clearing any failure state the old bug left behind), and re-enables the timer. A box with no auto-update timer installed at all has nothing to migrate — run `archRemoteSetup.sh`'s user stage instead.
+**Known rough edges:** the four package-name lists (`PACMAN_PACKAGES`/`APT_PACKAGES`/`DNF_PACKAGES`/`ZYPPER_PACKAGES`) are a best-effort mapping — some packages (recent JDK/.NET SDK releases, `eza`, `fastfetch`) may not exist in every release's repos yet and will just be skipped with a warning; verify the install log on a new distro/release combination before relying on it.
 
 **QEMU guest agent:** stage 2 installs and enables `qemu-guest-agent` (`--skip-qemu-agent` opts out), so the QEMU host can request clean shutdowns/reboots, freeze/thaw the filesystem for snapshots, and read the guest's IP.
 
-**Unattended updates:** stage 2 also installs a systemd timer (`--skip-auto-update` opts out) that runs `pacman -Syu`, then AUR updates via `yay` as the dev user, then `paccache -rk2`, every **Monday, Wednesday and Saturday at 03:00**:
+**Unattended updates:** stage 2 also installs a systemd timer (`--skip-auto-update` opts out) that upgrades all packages via whichever package manager the generated script detects at runtime (plus AUR via `yay` on Arch), every **Monday, Wednesday and Saturday at 03:00**:
 
 ```bash
-systemctl status arch-auto-update.timer   # next scheduled run
-sudo systemctl start arch-auto-update.service   # run it now
-journalctl -u arch-auto-update.service          # last run's output
+systemctl status linux-auto-update.timer   # next scheduled run
+sudo systemctl start linux-auto-update.service   # run it now
+journalctl -u linux-auto-update.service          # last run's output
 ```
 
-Arch's rolling `linux` package has no live-patching feed to apply kernel security updates without a restart (`kpatch` exists, but it needs a patch hand-built against the exact kernel build, which doesn't scale to arbitrary Arch kernel bumps). Instead, once the timer detects the installed kernel no longer matches the running one, it reboots automatically — but only when nobody is logged in (`who`) and no Claude Code agent is running for the dev user (`pgrep -f claude`), so it never yanks the machine out from under an active session or an in-flight agent. If either check fails, the reboot is skipped and retried at the next Mon/Wed/Sat window; check `journalctl -t arch-auto-update` for deferrals.
+None of these distros have a live-patching feed to apply kernel security updates without a restart. Instead, once the timer detects the installed kernel no longer matches the running one (compares `uname -r` against the newest `/boot/vmlinuz*` image's embedded version), it reboots automatically — but only when nobody is logged in (`who`) and no Claude Code agent is running for the dev user (`pgrep -f claude`), so it never yanks the machine out from under an active session or an in-flight agent. If either check fails, the reboot is skipped and retried at the next Mon/Wed/Sat window; check `journalctl -t linux-auto-update` for deferrals.
 
 ---
 
@@ -211,7 +213,7 @@ DotFiles/
 │   └── .scripts/
 │       └── omarchy-zsh-colors-set
 ├── arch-wsl/                # Arch on WSL: zsh, tmux, herdr, btop, git, mise + hackerman colors
-│                            #   (also reused by archRemoteSetup.sh for the remote dev box)
+│                            #   (also reused by linuxRemoteSetup.sh for the remote dev box, any distro)
 ├── ubuntu/                  # Ubuntu — desktop i3 + server variants
 │   ├── .config/i3/
 │   ├── .config/polybar/
@@ -226,8 +228,7 @@ DotFiles/
 ├── archDesktopInstall.sh    # Hyprland desktop setup (Arch)
 ├── omarchyPostInstall.sh    # Personal layer on top of omarchy
 ├── archWslSetup.sh          # Arch on WSL: CLI/TUI tools + hackerman theme
-├── archRemoteSetup.sh       # Arch remote SSH dev box (QEMU guest): GitHub key import + hardening, guest agent, auto-updates
-├── migrateArchAutoUpdate.sh # Fix an older box's auto-update timer onto the User=root version
+├── linuxRemoteSetup.sh      # Remote SSH dev box (QEMU guest, any distro): GitHub key import + hardening, guest agent, auto-updates
 ├── NvimSetup.sh             # Neovim bootstrap
 └── ubuntuServerInstalli3.sh # Ubuntu i3 setup
 ```
