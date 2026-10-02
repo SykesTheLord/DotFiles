@@ -141,6 +141,18 @@ Both stages always ask — unless `--github-user` was already given, or `--skip-
 
 Otherwise this mirrors `archWslSetup.sh`: same multilib/BlackArch handling, the same development package set and Mason install waiter, and it reuses `arch-wsl/`'s dotfiles directly (they're terminal-only and don't depend on WSL — the hackerman zsh theme uses 24-bit color, so it looks the same over plain SSH). It skips the WSL/Windows-only pieces: no `wsl.conf`, Windows Terminal integration, `wslu`, `wl-clipboard`, or `hackerman.nvim`.
 
+---
+
+### `migrateArchAutoUpdate.sh` — Fix up an older auto-update timer
+
+A box provisioned by an `archRemoteSetup.sh` from before its `arch-auto-update.service` pinned `User=root` relied on systemd's implicit default instead, so if the script ever ran without root (manual testing, an unusual systemd default) it failed with pacman's `you cannot perform this operation unless you are root`. Re-running `archRemoteSetup.sh`'s user stage already self-heals this (`install_auto_updates` diffs and redeploys on any content change), but doing that just to fix a systemd unit also reruns the full package install. This script does only the fix:
+
+```bash
+sudo bash migrateArchAutoUpdate.sh [--dry-run] [--target-user <name>]
+```
+
+It recovers the dev user from the `runuser -l '<user>'` calls already embedded in the installed `/usr/local/bin/arch-auto-update.sh` (pass `--target-user` only if that fails), does nothing if the box is already on the fixed version, and otherwise: stops the old timer, backs up the old script/service/timer to `.bak`, writes the current versions, `daemon-reload`s, `reset-failed`s (clearing any failure state the old bug left behind), and re-enables the timer. A box with no auto-update timer installed at all has nothing to migrate — run `archRemoteSetup.sh`'s user stage instead.
+
 **QEMU guest agent:** stage 2 installs and enables `qemu-guest-agent` (`--skip-qemu-agent` opts out), so the QEMU host can request clean shutdowns/reboots, freeze/thaw the filesystem for snapshots, and read the guest's IP.
 
 **Unattended updates:** stage 2 also installs a systemd timer (`--skip-auto-update` opts out) that runs `pacman -Syu`, then AUR updates via `yay` as the dev user, then `paccache -rk2`, every **Monday, Wednesday and Saturday at 03:00**:
@@ -215,6 +227,7 @@ DotFiles/
 ├── omarchyPostInstall.sh    # Personal layer on top of omarchy
 ├── archWslSetup.sh          # Arch on WSL: CLI/TUI tools + hackerman theme
 ├── archRemoteSetup.sh       # Arch remote SSH dev box (QEMU guest): GitHub key import + hardening, guest agent, auto-updates
+├── migrateArchAutoUpdate.sh # Fix an older box's auto-update timer onto the User=root version
 ├── NvimSetup.sh             # Neovim bootstrap
 └── ubuntuServerInstalli3.sh # Ubuntu i3 setup
 ```
