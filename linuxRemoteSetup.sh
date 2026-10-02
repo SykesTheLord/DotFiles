@@ -180,15 +180,24 @@ AUR_PACKAGES=(
 
 # Debian/Ubuntu. herdr and a pacman-contrib-style cache cleaner have no
 # packaged equivalent here, so they're left out rather than guessed at (see
-# the AUR_PACKAGES comment above). lazygit/lazydocker aren't packaged either,
-# but install_lazygit_lazydocker fetches them from GitHub releases instead.
-# fd/bat ship under
+# the AUR_PACKAGES comment above). lazygit/lazydocker/mise aren't packaged
+# either, but install_lazygit_lazydocker/install_mise fetch them directly
+# instead (mise isn't in APT_PACKAGES at all; see install_mise). terraform
+# and dotnet-sdk/aspnetcore-runtime ARE real package names, but need their
+# vendors' own repos added first (setup_hashicorp_repo/setup_dotnet_repo) —
+# neither is in Debian/Ubuntu's own repos. Every name here still passes
+# through filter_available_packages before install, so a wrong guess (or a
+# very new release that hasn't caught up yet, e.g. tldr on Ubuntu 26.04)
+# warns and is skipped instead of aborting the whole run — see
+# filter_available_packages for why `apt-get install --ignore-missing` alone
+# doesn't cover that (it only tolerates download failures, not unresolvable
+# names or "no candidate" packages). fd/bat ship under
 # fdfind/batcat on Debian/Ubuntu; deploy_dotfiles symlinks fd/bat to them.
 APT_PACKAGES=(
     build-essential git gh openssh-server curl wget rsync unzip zip
     less man-db manpages zsh bash-completion
     neovim vim tmux
-    fzf ripgrep fd-find bat eza zoxide jq direnv tldr hyperfine btop fastfetch mise
+    fzf ripgrep fd-find bat eza zoxide jq direnv tldr hyperfine btop fastfetch
     docker.io docker-compose-v2 docker-buildx-plugin terraform
     gcc g++ pkg-config clang llvm libc++-dev lldb gdb cmake ninja-build meson bear ccache
     libgtest-dev valgrind cppcheck strace
@@ -203,13 +212,18 @@ APT_PACKAGES=(
 )
 
 # Fedora / CentOS-RHEL family. "@development-tools" is a dnf group reference,
-# valid directly in `dnf install`. Docker needs its own repo here first (see
-# setup_docker_repo) since neither ships docker-ce in the base repos.
+# valid directly in `dnf install`. Docker, HashiCorp (terraform) and
+# Microsoft (dotnet-sdk/aspnetcore-runtime) all need their own repo added
+# first (setup_docker_repo/setup_hashicorp_repo/setup_dotnet_repo) since none
+# of those are in the base repos. mise isn't packaged either; install_mise
+# fetches it directly. Every name here passes through
+# filter_available_packages before install so an unresolvable name warns and
+# is skipped instead of aborting the whole run.
 DNF_PACKAGES=(
     @development-tools git gh openssh-server curl wget rsync unzip zip
     less man-db man-pages zsh bash-completion
     neovim vim tmux
-    fzf ripgrep fd-find bat eza zoxide jq direnv tldr hyperfine btop fastfetch mise
+    fzf ripgrep fd-find bat eza zoxide jq direnv tldr hyperfine btop fastfetch
     docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin terraform
     gcc gcc-c++ pkgconf-pkg-config clang llvm libcxx-devel lldb gdb cmake ninja-build meson bear ccache
     gtest-devel valgrind cppcheck strace ltrace
@@ -227,11 +241,16 @@ DNF_PACKAGES=(
 # can't mix with regular packages in one `zypper install`). Both the
 # versioned (nodejsNN/npmNN) and plain nodejs/npm names are listed since the
 # convention varies by openSUSE version; whichever doesn't exist is skipped.
+# Neither HashiCorp nor Microsoft publish an openSUSE repo, so terraform and
+# dotnet-sdk/aspnetcore-runtime are left as best-effort guesses here — they
+# pass through filter_available_packages like everything else, so a miss
+# just warns and skips rather than aborting. mise isn't packaged either;
+# install_mise fetches it directly.
 ZYPPER_PACKAGES=(
     git gh openssh curl wget rsync unzip zip
     less man man-pages zsh bash-completion
     neovim vim tmux
-    fzf ripgrep fd bat eza zoxide jq direnv tldr hyperfine btop fastfetch mise
+    fzf ripgrep fd bat eza zoxide jq direnv tldr hyperfine btop fastfetch
     docker docker-compose docker-buildx terraform
     gcc gcc-c++ pkg-config clang llvm libc++-devel lldb gdb cmake ninja meson bear ccache
     gtest valgrind cppcheck strace ltrace
@@ -322,16 +341,73 @@ run_root() {
     fi
 }
 
-# pkg_install <pkgs...>: install packages as root (via sudo if not already
-# root), tolerating individual unknown-package names rather than aborting the
-# whole transaction — the package lists above are a best-effort cross-distro
-# mapping and not every tool exists in every release's repos.
-pkg_install() {
+# pkg_available <pkg>: true if the package manager can actually resolve and
+# install <pkg> right now. Checked individually before every install call,
+# because none of the "tolerate missing packages" flags a package manager
+# offers actually cover an unresolvable name or a package with no
+# installable candidate:
+#   - apt-get install --ignore-missing only tolerates download/retrieval
+#     failures for packages that already resolved; "Unable to locate
+#     package" and "has no installation candidate" are both resolved before
+#     that logic ever runs, so apt-get aborts the whole transaction
+#     regardless of the flag (confirmed live: this is exactly what broke
+#     tldr/mise/terraform/dotnet-sdk on a fresh Ubuntu release that doesn't
+#     carry some of these — set -euo pipefail then kills the whole script).
+#   - dnf's --setopt=strict=0/--skip-broken and zypper's --ignore-unknown may
+#     genuinely work as documented, but given apt's flag turned out not to
+#     do what its name implies, every manager gets the same real
+#     check-before-install treatment here instead of trusting any of them.
+pkg_available() {
+    local pkg="$1"
     case "$PKG_MANAGER" in
-        pacman) run_root pacman -S --needed --noconfirm "$@" ;;
-        apt)    run_root apt-get install -y --ignore-missing "$@" ;;
-        dnf)    run_root dnf install -y --setopt=strict=0 --skip-broken "$@" ;;
-        zypper) run_root zypper --non-interactive install --no-recommends --ignore-unknown "$@" ;;
+        pacman) pacman -Si "$pkg" &>/dev/null || pacman -Qi "$pkg" &>/dev/null ;;
+        apt)
+            local policy
+            policy=$(apt-cache policy "$pkg" 2>/dev/null)
+            [[ -n "$policy" ]] && ! grep -q 'Candidate: (none)' <<< "$policy"
+            ;;
+        dnf)
+            [[ "$pkg" == @* ]] && return 0   # dnf group reference; dnf resolves these itself
+            dnf -q list --available "$pkg" &>/dev/null || dnf -q list --installed "$pkg" &>/dev/null
+            ;;
+        zypper)
+            zypper --non-interactive install --dry-run "$pkg" &>/dev/null
+            ;;
+    esac
+}
+
+# filter_available_packages <pkgs...>: prints the subset pkg_available
+# confirms (one per line, for `mapfile`), and warns once naming anything
+# that's missing instead of letting it take down the whole install.
+filter_available_packages() {
+    local pkg available=() missing=()
+    for pkg in "$@"; do
+        if pkg_available "$pkg"; then
+            available+=("$pkg")
+        else
+            missing+=("$pkg")
+        fi
+    done
+    if (( ${#missing[@]} > 0 )); then
+        warn "Not available via $PKG_MANAGER, skipped: ${missing[*]}"
+    fi
+    (( ${#available[@]} > 0 )) && printf '%s\n' "${available[@]}"
+    return 0
+}
+
+# pkg_install <pkgs...>: filters to only what filter_available_packages
+# confirms, then installs as root (via sudo if not already root). Used for
+# one-off single/small package installs elsewhere in this script; the bulk
+# per-distro arrays go through the same filter directly in install_packages.
+pkg_install() {
+    local available=()
+    mapfile -t available < <(filter_available_packages "$@")
+    (( ${#available[@]} == 0 )) && return 0
+    case "$PKG_MANAGER" in
+        pacman) run_root pacman -S --needed --noconfirm "${available[@]}" ;;
+        apt)    run_root apt-get install -y "${available[@]}" ;;
+        dnf)    run_root dnf install -y "${available[@]}" ;;
+        zypper) run_root zypper --non-interactive install --no-recommends "${available[@]}" ;;
     esac
 }
 
@@ -411,6 +487,94 @@ setup_docker_repo() {
     is_fedora && repo_url="https://download.docker.com/linux/fedora/docker-ce.repo"
     run_root dnf -y install dnf-plugins-core
     run_root dnf config-manager --add-repo "$repo_url"
+}
+
+# ── Debian/Ubuntu + Fedora/CentOS: vendor repos for packages not in the base
+#    repos at all (terraform, dotnet-sdk/aspnetcore-runtime) ────────────────
+
+# Neither Debian/Ubuntu nor Fedora/CentOS carry terraform in their own repos;
+# HashiCorp publishes one for both. openSUSE isn't supported by either, so
+# terraform stays a best-effort guess there via filter_available_packages.
+setup_hashicorp_repo() {
+    case "$PKG_MANAGER" in
+        apt)
+            if [[ -f /etc/apt/sources.list.d/hashicorp.list ]]; then
+                log "HashiCorp apt repository already configured"
+                return
+            fi
+            log "Adding the HashiCorp apt repository (terraform)"
+            if $DRY_RUN; then
+                echo "  [dry-run] key+add apt.releases.hashicorp.com as a repo"
+                return
+            fi
+            command -v gpg &>/dev/null || pkg_install gnupg
+            curl -fsSL https://apt.releases.hashicorp.com/gpg \
+                | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+            local codename
+            codename=$(. /etc/os-release && echo "${VERSION_CODENAME:-}")
+            printf 'deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com %s main\n' "$codename" \
+                | sudo tee /etc/apt/sources.list.d/hashicorp.list > /dev/null
+            ;;
+        dnf)
+            if [[ -f /etc/yum.repos.d/hashicorp.repo ]]; then
+                log "HashiCorp dnf repository already configured"
+                return
+            fi
+            log "Adding the HashiCorp dnf repository (terraform)"
+            local repo_url="https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo"
+            is_fedora && repo_url="https://rpm.releases.hashicorp.com/fedora/hashicorp.repo"
+            run_root dnf -y install dnf-plugins-core
+            run_root dnf config-manager --add-repo "$repo_url"
+            ;;
+    esac
+}
+
+# Neither Debian/Ubuntu's nor Fedora/CentOS's own repos reliably carry the
+# dotnet-sdk/aspnetcore-runtime versions pinned above (confirmed missing on a
+# fresh Ubuntu release); Microsoft publishes a repo for both. openSUSE isn't
+# supported, so those packages stay a best-effort guess there too.
+setup_dotnet_repo() {
+    local id version_id
+    id=$(. /etc/os-release && echo "$ID")
+    version_id=$(. /etc/os-release && echo "$VERSION_ID")
+
+    case "$PKG_MANAGER" in
+        apt)
+            if [[ -f /etc/apt/sources.list.d/microsoft-prod.list ]]; then
+                log "Microsoft apt repository already configured"
+                return
+            fi
+            log "Adding the Microsoft apt repository (.NET SDKs)"
+            if $DRY_RUN; then
+                echo "  [dry-run] install packages.microsoft.com's packages-microsoft-prod.deb for $id $version_id"
+                return
+            fi
+            local tmp
+            tmp=$(mktemp -d)
+            if curl -fsSL -o "$tmp/ms.deb" "https://packages.microsoft.com/config/$id/$version_id/packages-microsoft-prod.deb"; then
+                sudo dpkg -i "$tmp/ms.deb"
+            else
+                warn "Microsoft doesn't publish a dotnet repo for $id $version_id; dotnet-sdk/aspnetcore-runtime will likely be skipped below."
+            fi
+            rm -rf "$tmp"
+            ;;
+        dnf)
+            if [[ -f /etc/yum.repos.d/microsoft-prod.repo ]]; then
+                log "Microsoft dnf repository already configured"
+                return
+            fi
+            log "Adding the Microsoft dnf repository (.NET SDKs)"
+            is_centos && id=rhel   # Rocky/Alma/CentOS Stream/RHEL all map to Microsoft's "rhel" path
+            [[ "$id" == rhel ]] && version_id="${version_id%%.*}"   # rhel path wants the major version only
+            if $DRY_RUN; then
+                echo "  [dry-run] install packages.microsoft.com's packages-microsoft-prod.rpm for $id $version_id"
+                return
+            fi
+            if ! sudo rpm -Uvh "https://packages.microsoft.com/config/$id/$version_id/packages-microsoft-prod.rpm" 2>/dev/null; then
+                warn "Microsoft doesn't publish a dotnet repo for $id $version_id; dotnet-sdk/aspnetcore-runtime will likely be skipped below."
+            fi
+            ;;
+    esac
 }
 
 # ── SSH key enrollment (shared by both stages) ──────────────────────────────
@@ -591,20 +755,37 @@ root_stage() {
         command -v curl &>/dev/null || pkg_install curl
 
         log "Upgrading system and installing bootstrap packages"
+        local bootstrap=() available=()
+        case "$PKG_MANAGER" in
+            apt)    bootstrap=(sudo zsh git openssh-server curl) ;;
+            dnf)    bootstrap=(sudo zsh git openssh-server curl) ;;
+            zypper) bootstrap=(sudo zsh git openssh curl) ;;
+        esac
         case "$PKG_MANAGER" in
             apt)
                 run apt-get update -y
-                run apt-get install -y --ignore-missing sudo zsh git openssh-server curl
+                mapfile -t available < <(filter_available_packages "${bootstrap[@]}")
+                run apt-get install -y "${available[@]}"
                 ;;
             dnf)
-                run dnf install -y --setopt=strict=0 --skip-broken sudo zsh git openssh-server curl
+                mapfile -t available < <(filter_available_packages "${bootstrap[@]}")
+                run dnf install -y "${available[@]}"
                 ;;
             zypper)
                 run zypper --non-interactive install -t pattern devel_basis
-                run zypper --non-interactive install --no-recommends --ignore-unknown sudo zsh git openssh curl
+                run zypper --non-interactive refresh
+                mapfile -t available < <(filter_available_packages "${bootstrap[@]}")
+                run zypper --non-interactive install --no-recommends "${available[@]}"
                 ;;
         esac
     fi
+
+    # sudo, zsh and git are universal across every supported distro's base
+    # repos, so filter_available_packages skipping any of them would be
+    # surprising — but everything from here on (every run_root/sudo call,
+    # the new user's shell) silently depends on them, so verify rather than
+    # limp forward into a confusing failure much later.
+    $DRY_RUN || command -v sudo &>/dev/null || die "sudo didn't install; install it manually and re-run."
 
     configure_locale
 
@@ -662,22 +843,28 @@ install_packages() {
     fi
 
     setup_docker_repo
+    setup_hashicorp_repo
+    setup_dotnet_repo
     log "Installing packages (herdr has no equivalent here; skipped)"
+    local available=()
     case "$PKG_MANAGER" in
         apt)
             run sudo apt-get update -y
             run sudo apt-get full-upgrade -y
-            run sudo apt-get install -y --ignore-missing "${APT_PACKAGES[@]}"
+            mapfile -t available < <(filter_available_packages "${APT_PACKAGES[@]}")
+            run sudo apt-get install -y "${available[@]}"
             ;;
         dnf)
             run sudo dnf upgrade -y
-            run sudo dnf install -y --setopt=strict=0 --skip-broken "${DNF_PACKAGES[@]}"
+            mapfile -t available < <(filter_available_packages "${DNF_PACKAGES[@]}")
+            run sudo dnf install -y "${available[@]}"
             ;;
         zypper)
             run sudo zypper --non-interactive install -t pattern devel_basis
             run sudo zypper --non-interactive refresh
             run sudo zypper --non-interactive update
-            run sudo zypper --non-interactive install --no-recommends --ignore-unknown "${ZYPPER_PACKAGES[@]}"
+            mapfile -t available < <(filter_available_packages "${ZYPPER_PACKAGES[@]}")
+            run sudo zypper --non-interactive install --no-recommends "${available[@]}"
             ;;
     esac
 }
@@ -725,6 +912,24 @@ install_uv_ruff() {
             run pipx install "$tool"
         fi
     done
+}
+
+# mise isn't an apt/dnf/zypper package anywhere (Arch's pacman is the one
+# real exception, already in PACMAN_PACKAGES); its own installer is the
+# standard cross-distro method and installs to ~/.local/bin/mise — already
+# first on .zshrc's PATH — with no root needed.
+install_mise() {
+    is_arch && return 0
+    if command -v mise &>/dev/null; then
+        log "mise already installed"
+        return
+    fi
+    log "Installing mise via https://mise.run"
+    if $DRY_RUN; then
+        echo "  [dry-run] curl -fsSL https://mise.run | sh (installs to ~/.local/bin/mise)"
+        return
+    fi
+    curl -fsSL https://mise.run | sh
 }
 
 # install_github_release_binary <owner/repo> <binary-name>: installs a single
@@ -840,6 +1045,10 @@ deploy_dotfiles() {
 }
 
 install_mise_tools() {
+    if ! command -v mise &>/dev/null; then
+        warn "mise isn't installed; skipping ~/.config/mise/config.toml tools (Claude Code, Codex)"
+        return
+    fi
     log "Installing mise tools from ~/.config/mise/config.toml (Claude Code, Codex)"
     run mise install
 }
@@ -1177,6 +1386,7 @@ user_stage() {
     symlink_renamed_tools
     install_tree_sitter_cli
     install_uv_ruff
+    install_mise
     install_lazygit_lazydocker
     install_yay
     install_aur_packages
