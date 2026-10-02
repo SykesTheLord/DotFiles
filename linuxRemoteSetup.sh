@@ -474,10 +474,25 @@ blackarch_install_args() {
 
 # ── Fedora/CentOS-only: Docker CE repo ───────────────────────────────────────
 
+# True if a working `docker` command already exists, regardless of how it
+# got there (docker-ce from Docker's own repo set up by hand, the distro's
+# own docker/docker.io package, Fedora/CentOS's podman-docker shim, snap,
+# ...). Debian/Ubuntu's docker.io and openSUSE's docker package conflict
+# with a vendor-installed docker-ce (they provide the same binaries under a
+# different package name), and docker-ce itself can conflict with
+# podman-docker on Fedora/CentOS — in every case, requesting the "wrong" one
+# makes the package manager remove whatever's already there to satisfy the
+# new install. So once docker is present by any means, leave it alone rather
+# than additionally requesting this distro's own docker packages.
+docker_present() {
+    command -v docker &>/dev/null
+}
+
 # Neither Fedora nor the CentOS/RHEL family ships docker-ce in its base repos
 # (both promote podman instead), so it needs Docker's own repo added first.
 setup_docker_repo() {
     [[ "$PKG_MANAGER" == dnf ]] || return 0
+    docker_present && return 0
     if [[ -f /etc/yum.repos.d/docker-ce.repo ]]; then
         log "Docker CE repository already configured"
         return
@@ -487,6 +502,26 @@ setup_docker_repo() {
     is_fedora && repo_url="https://download.docker.com/linux/fedora/docker-ce.repo"
     run_root dnf -y install dnf-plugins-core
     run_root dnf config-manager --add-repo "$repo_url"
+}
+
+# exclude_installed_docker <pkg...>: prints the given packages, minus any
+# Docker package name, if docker_present — see docker_present for why.
+exclude_installed_docker() {
+    if ! docker_present; then
+        printf '%s\n' "$@"
+        return 0
+    fi
+    log "docker is already installed; not requesting $PKG_MANAGER's own docker packages (leaving the existing install alone)"
+    local pkg
+    for pkg in "$@"; do
+        case "$pkg" in
+            docker|docker.io|docker-ce|docker-ce-cli|containerd.io| \
+            docker-compose|docker-compose-v2|docker-compose-plugin| \
+            docker-buildx|docker-buildx-plugin) ;;
+            *) echo "$pkg" ;;
+        esac
+    done
+    return 0
 }
 
 # ── Debian/Ubuntu + Fedora/CentOS: vendor repos for packages not in the base
@@ -846,24 +881,32 @@ install_packages() {
     setup_hashicorp_repo
     setup_dotnet_repo
     log "Installing packages (herdr has no equivalent here; skipped)"
-    local available=()
+    local pkgs=() available=()
     case "$PKG_MANAGER" in
         apt)
             run sudo apt-get update -y
-            run sudo apt-get full-upgrade -y
-            mapfile -t available < <(filter_available_packages "${APT_PACKAGES[@]}")
+            # Plain upgrade, not full-upgrade/dist-upgrade: full-upgrade is
+            # documented to remove installed packages when it decides that's
+            # necessary to complete a system-wide upgrade. Plain upgrade
+            # never removes anything — it just leaves a package it can't
+            # safely upgrade in place instead.
+            run sudo apt-get upgrade -y
+            mapfile -t pkgs < <(exclude_installed_docker "${APT_PACKAGES[@]}")
+            mapfile -t available < <(filter_available_packages "${pkgs[@]}")
             run sudo apt-get install -y "${available[@]}"
             ;;
         dnf)
             run sudo dnf upgrade -y
-            mapfile -t available < <(filter_available_packages "${DNF_PACKAGES[@]}")
+            mapfile -t pkgs < <(exclude_installed_docker "${DNF_PACKAGES[@]}")
+            mapfile -t available < <(filter_available_packages "${pkgs[@]}")
             run sudo dnf install -y "${available[@]}"
             ;;
         zypper)
             run sudo zypper --non-interactive install -t pattern devel_basis
             run sudo zypper --non-interactive refresh
             run sudo zypper --non-interactive update
-            mapfile -t available < <(filter_available_packages "${ZYPPER_PACKAGES[@]}")
+            mapfile -t pkgs < <(exclude_installed_docker "${ZYPPER_PACKAGES[@]}")
+            mapfile -t available < <(filter_available_packages "${pkgs[@]}")
             run sudo zypper --non-interactive install --no-recommends "${available[@]}"
             ;;
     esac
@@ -1269,7 +1312,7 @@ if command -v pacman &>/dev/null; then
     command -v paccache &>/dev/null && paccache -rk2
 elif command -v apt-get &>/dev/null; then
     apt-get update -y
-    apt-get full-upgrade -y
+    apt-get upgrade -y
     apt-get autoremove -y
     apt-get autoclean -y
 elif command -v dnf &>/dev/null; then
