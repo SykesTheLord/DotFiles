@@ -17,11 +17,16 @@
 # (the same mechanism their own install docs use), so install_lazygit_lazydocker
 # fetches those directly instead of skipping them.
 #
-# Stage 1, as root on a fresh box (clone this repo somewhere world-readable,
+# Stage 1, as root (or as any existing sudo-capable user, as long as --user is
+# passed — see below) on a fresh box (clone this repo somewhere world-readable,
 # e.g. /opt/DotFiles, or re-clone it as the new user for stage 2):
 #   bash linuxRemoteSetup.sh --user <name> [--github-user <name>] [--skip-github]
 #   Initialises the package manager, locale, sudo and the user account.
-#   Prompts for --user if omitted. Unless --github-user is already given (or
+#   Prompts for --user if omitted. If not run as root, passing --user makes it
+#   re-exec itself via sudo (common on cloud images that only give you a
+#   sudo-capable non-root user and disable direct root login) — pass your own
+#   username to set up that already-existing account instead of creating a
+#   new one. Unless --github-user is already given (or
 #   --skip-github opts out), it then always asks whether to enroll a GitHub
 #   account's public keys into ~/.ssh/authorized_keys, and if so, which one.
 #   Once a key is installed, disables SSH password and root login
@@ -73,6 +78,10 @@ SKIP_AUTO_UPDATE=false
 SKIP_GITHUB=false
 NEW_USER=""
 GITHUB_USER=""
+
+# Preserved for the possible sudo re-exec at the bottom of this script, since
+# the parsing loop below consumes "$@" via shift.
+ORIGINAL_ARGS=("$@")
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -1192,6 +1201,17 @@ user_stage() {
 
 if [[ $EUID -eq 0 ]]; then
     root_stage
+elif [[ -n "$NEW_USER" ]]; then
+    # --user signals stage-1 intent (creating/configuring that account). Many
+    # cloud images only give you a sudo-capable non-root user and disable
+    # direct root login, so re-exec the whole script under sudo instead of
+    # requiring an actual root session — root_stage already handles the
+    # target user already existing (just ensures group membership), so this
+    # also covers "set up my own already-existing sudo user" by passing
+    # --user <your-own-username>.
+    command -v sudo &>/dev/null || die "Not root and sudo isn't installed; log in as root to run stage 1."
+    log "Not root; re-running stage 1 via sudo"
+    exec sudo bash "$0" "${ORIGINAL_ARGS[@]}"
 else
     user_stage
 fi
