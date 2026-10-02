@@ -18,8 +18,11 @@
 # fetches those directly instead of skipping them.
 #
 # Stage 1, as root (or as any existing sudo-capable user, as long as --user is
-# passed — see below) on a fresh box (clone this repo somewhere world-readable,
-# e.g. /opt/DotFiles, or re-clone it as the new user for stage 2):
+# passed — see below) on a fresh box. As root, clone this repo somewhere
+# world-readable, e.g. /opt/DotFiles (a non-root user can't write there, and
+# if targeting a new account, that account needs to read it back for stage
+# 2 anyway); as a non-root sudo user targeting your own account, clone into
+# your own home instead (e.g. ~/.dotfiles):
 #   bash linuxRemoteSetup.sh --user <name> [--github-user <name>] [--skip-github]
 #   Initialises the package manager, locale, sudo and the user account.
 #   Prompts for --user if omitted. If not run as root, passing --user makes it

@@ -130,17 +130,21 @@ Sets up a headless Linux box, running as a QEMU guest, as a remote SSH developme
 **Quick start on a fresh box, as root or any sudo-capable user** (one line: clone the repo and run stage 1):
 
 ```bash
-# Create a new dedicated account:
+# As root, creating a new dedicated account: /opt is root-writable, and needs
+# to be world-readable anyway so the new user can get back to this clone for
+# stage 2 (a clone left under /root wouldn't be — the script warns if so).
 git clone https://github.com/SykesTheLord/DotFiles.git /opt/DotFiles && cd /opt/DotFiles && bash linuxRemoteSetup.sh --user <name>
 
-# Or, set up the account you're already using (e.g. cloud-init's default
-# "ubuntu"/"ec2-user" sudo user) in place, instead of creating a new one:
-git clone https://github.com/SykesTheLord/DotFiles.git /opt/DotFiles && cd /opt/DotFiles && bash linuxRemoteSetup.sh --user "$(whoami)"
+# Or, as a non-root sudo user, setting up the account you're already using
+# (e.g. cloud-init's default "ubuntu"/"ec2-user" user) in place instead of
+# creating a new one: clone into your own home instead of /opt, which a
+# non-root user can't write to.
+git clone https://github.com/SykesTheLord/DotFiles.git ~/.dotfiles && cd ~/.dotfiles && bash linuxRemoteSetup.sh --user "$(whoami)"
 ```
 
 Not root? Passing `--user` is what signals stage 1 — if you're not already root, it re-execs itself via `sudo` automatically, which also covers cloud images that only give you a sudo-capable user with direct root login disabled. If `<name>` already exists (as in the `$(whoami)` example above), that account is left alone — no new user, no password lock — and it's just the sudo-group/locale/SSH-key/hardening setup applied to the account you're already using. If it doesn't exist yet, it's created fresh and left with a locked password until a GitHub key is confirmed imported.
 
-Then, if you had it create a separate new account, log in as `<name>` and run `cd /opt/DotFiles && bash linuxRemoteSetup.sh` again for stage 2 — it can't be chained into the same command, since stage 1 deliberately locks that account's password until you've confirmed key-based SSH access works. (Self-targeting your own account skips the lock, so you can go straight on to stage 2 in the same session.) Full two-stage breakdown:
+Then, if you had it create a separate new account, log in as `<name>` and run `cd /opt/DotFiles && bash linuxRemoteSetup.sh` again for stage 2 — it can't be chained into the same command, since stage 1 deliberately locks that account's password until you've confirmed key-based SSH access works. (Self-targeting your own account skips the lock, so you can go straight on to stage 2 in the same session, from the same `~/.dotfiles` clone.) Full two-stage breakdown:
 
 ```bash
 # 1. As root, or as a sudo-capable user (auto-elevates via sudo): package
